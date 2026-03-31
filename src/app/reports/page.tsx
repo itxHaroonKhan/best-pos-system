@@ -72,15 +72,15 @@ export default function ReportsPage() {
           <TabsTrigger value="sales" className="gap-2">
             <TrendingUp className="w-4 h-4" />
             Sales Performance
-          </Trigger>
+          </TabsTrigger>
           <TabsTrigger value="categories" className="gap-2">
             <PieChart className="w-4 h-4" />
             Category Mix
-          </Trigger>
+          </TabsTrigger>
           <TabsTrigger value="tax" className="gap-2">
             <FileText className="w-4 h-4" />
             Tax Summary
-          </Trigger>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="sales">
           <Card>
