@@ -72,7 +72,7 @@ export function AppSidebar() {
             <Store className="w-5 h-5 text-accent-foreground" />
           </div>
           <span className="font-headline font-bold text-xl group-data-[collapsible=icon]:hidden">
-            NexusSales
+          software Elites
           </span>
         </div>
       </SidebarHeader>

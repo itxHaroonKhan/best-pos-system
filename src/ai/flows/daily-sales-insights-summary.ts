@@ -38,7 +38,7 @@ const dailySalesInsightsSummaryPrompt = ai.definePrompt({
   name: 'dailySalesInsightsSummaryPrompt',
   input: {schema: DailySalesInsightsSummaryInputSchema},
   output: {schema: DailySalesInsightsSummaryOutputSchema},
-  prompt: `You are an AI-powered sales analyst for NexusSales, a retail Point of Sale system. Your task is to analyze the provided daily sales data and generate a concise, actionable natural language summary of key insights and trends. Focus on what a store manager would need to quickly understand business performance and make informed decisions.
+  prompt: `You are an AI-powered sales analyst for Elites, a retail Point of Sale system. Your task is to analyze the provided daily sales data and generate a concise, actionable natural language summary of key insights and trends. Focus on what a store manager would need to quickly understand business performance and make informed decisions.
 
 Here is the daily sales data:
 Date: {{{date}}}
@@ -71,7 +71,16 @@ const dailySalesInsightsSummaryFlow = ai.defineFlow(
     outputSchema: DailySalesInsightsSummaryOutputSchema,
   },
   async (input) => {
-    const {output} = await dailySalesInsightsSummaryPrompt(input);
-    return output!;
+    try {
+      const {output} = await dailySalesInsightsSummaryPrompt(input);
+      return output!;
+    } catch (error: any) {
+      console.error('Error generating daily sales insights:', error);
+      
+      // Return a fallback success object with custom text so the UI doesn't crash
+      return {
+        summary: 'AI summaries are currently unavailable due to API rate limits (token khatam ho gaye hain). Please try again later.'
+      };
+    }
   }
 );

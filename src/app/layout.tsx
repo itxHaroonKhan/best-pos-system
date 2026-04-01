@@ -5,7 +5,7 @@ import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'NexusSales | Advanced POS System',
+  title: 'Elites | Advanced POS System',
   description: 'Next-generation retail billing, inventory, and reporting.',
 };
 

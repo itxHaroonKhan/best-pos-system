@@ -2,7 +2,7 @@
 
 ## Core Features:
 
-- Sales Transaction Processing: Efficiently process sales with barcode scanning, apply discounts, and manage diverse payment methods.
+- Sales Transaction Processing: Efficiently process sales with barcode scanning, apply discounts, and manage diverse payment methods. 
 - Product Inventory Management: Track stock levels, manage product SKUs, and receive automated low-stock alerts.
 - Basic Customer Records: Maintain essential customer profiles and easily view their complete purchase history.
 - Sales & Financial Reporting: Generate key financial reports, including daily sales summaries and profit/loss statements, from the MySQL database.

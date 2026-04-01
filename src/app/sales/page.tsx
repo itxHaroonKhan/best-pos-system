@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
+import { PaymentDialog } from "@/components/sales/payment-dialog"
 
 interface CartItem {
   id: string
@@ -31,9 +32,10 @@ export default function POSPage() {
   const [cart, setCart] = React.useState<CartItem[]>([])
   const [searchTerm, setSearchTerm] = React.useState("")
   const [discount, setDiscount] = React.useState(0)
+  const [isPaymentOpen, setIsPaymentOpen] = React.useState(false)
 
-  const filteredProducts = DEMO_PRODUCTS.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredProducts = DEMO_PRODUCTS.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.sku.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -63,6 +65,20 @@ export default function POSPage() {
 
   const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item.id !== id))
+    toast({
+      title: "Item removed",
+      description: "Item has been removed from cart.",
+      variant: "destructive",
+    })
+  }
+
+  const clearCart = () => {
+    setCart([])
+    setDiscount(0)
+    toast({
+      title: "Cart cleared",
+      description: "All items have been removed.",
+    })
   }
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -70,11 +86,18 @@ export default function POSPage() {
   const total = subtotal + tax - discount
 
   const handleCheckout = () => {
-    if (cart.length === 0) return
-    toast({
-      title: "Order Completed",
-      description: `Transaction for ₹${total.toFixed(2)} successful.`,
-    })
+    if (cart.length === 0) {
+      toast({
+        title: "Cart is empty",
+        description: "Please add items to proceed with payment.",
+        variant: "destructive",
+      })
+      return
+    }
+    setIsPaymentOpen(true)
+  }
+
+  const handlePaymentComplete = () => {
     setCart([])
     setDiscount(0)
   }
@@ -97,6 +120,17 @@ export default function POSPage() {
           </Button>
         </div>
       </div>
+
+      <PaymentDialog
+        open={isPaymentOpen}
+        onOpenChange={setIsPaymentOpen}
+        cart={cart}
+        subtotal={subtotal}
+        tax={tax}
+        discount={discount}
+        total={total}
+        onComplete={handlePaymentComplete}
+      />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
         {/* Product Selection Area */}
@@ -230,13 +264,25 @@ export default function POSPage() {
               </Button>
             </div>
 
-            <Button 
-              className="w-full h-14 text-lg font-bold bg-accent hover:bg-accent/90 text-accent-foreground"
-              disabled={cart.length === 0}
-              onClick={handleCheckout}
-            >
-              COMPLETE PAYMENT
-            </Button>
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <Button
+                variant="outline"
+                className="h-12 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                onClick={clearCart}
+                disabled={cart.length === 0}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear
+              </Button>
+              <Button
+                className="h-12 text-lg font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={cart.length === 0}
+                onClick={handleCheckout}
+              >
+                <CreditCard className="w-5 h-5 mr-2" />
+                PAY NOW
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </div>

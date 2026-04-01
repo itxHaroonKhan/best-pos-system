@@ -30,7 +30,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Store Name</label>
-              <Input defaultValue="NexusSales" />
+              <Input defaultValue="Elites" />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Store Address</label>
@@ -42,7 +42,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>
-              <Input defaultValue="contact@nexussales.com" type="email" />
+              <Input defaultValue="contact@elites.com" type="email" />
             </div>
           </CardContent>
         </Card>
