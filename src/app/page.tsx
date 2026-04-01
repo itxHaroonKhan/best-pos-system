@@ -1,13 +1,16 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  DollarSign, 
-  ShoppingCart, 
-  Users, 
+import {
+  ArrowUpRight,
+  ArrowDownRight,
+  DollarSign,
+  ShoppingCart,
+  Users,
   Package,
   TrendingUp,
-  Activity
+  Activity,
+  Calendar
 } from "lucide-react"
 import { AIInsights } from "@/components/dashboard/ai-insights"
 
@@ -43,6 +46,18 @@ export default function DashboardPage() {
     },
   ]
 
+  const dailyRevenue = [
+    { day: "Mon", revenue: 4200, orders: 45 },
+    { day: "Tue", revenue: 5800, orders: 62 },
+    { day: "Wed", revenue: 4900, orders: 53 },
+    { day: "Thu", revenue: 7200, orders: 78 },
+    { day: "Fri", revenue: 8500, orders: 92 },
+    { day: "Sat", revenue: 9800, orders: 105 },
+    { day: "Sun", revenue: 6400, orders: 68 },
+  ]
+
+  const maxRevenue = Math.max(...dailyRevenue.map(d => d.revenue))
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
@@ -50,6 +65,7 @@ export default function DashboardPage() {
         <p className="text-muted-foreground">Welcome back, Admin. Here's what's happening today.</p>
       </div>
 
+      {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title} className="hover:shadow-md transition-shadow">
@@ -78,6 +94,61 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Daily Revenue Trends */}
+      <Card className="border-border bg-card/50 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            Daily Revenue Trends
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Chart Area */}
+            <div className="h-48 flex items-end gap-2 pt-4">
+              {dailyRevenue.map((day) => (
+                <div key={day.day} className="flex-1 flex flex-col items-center gap-2 group">
+                  <div className="relative w-full flex justify-center">
+                    <div 
+                      className="w-full max-w-[60px] bg-gradient-to-t from-primary/80 to-primary rounded-t-lg transition-all duration-300 group-hover:from-primary group-hover:to-accent cursor-pointer relative"
+                      style={{ height: `${(day.revenue / maxRevenue) * 160}px` }}
+                    >
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg whitespace-nowrap z-10">
+                        <p className="text-xs font-bold text-primary">₹{day.revenue.toLocaleString()}</p>
+                        <p className="text-[10px] text-muted-foreground">{day.orders} orders</p>
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-medium">{day.day}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Avg Daily Revenue</p>
+                <p className="text-lg font-bold text-primary">
+                  ₹{(dailyRevenue.reduce((a, b) => a + b.revenue, 0) / 7).toFixed(0)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Total Orders</p>
+                <p className="text-lg font-bold text-foreground">
+                  {dailyRevenue.reduce((a, b) => a + b.orders, 0)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Best Day</p>
+                <p className="text-lg font-bold text-accent">
+                  Sat ₹{Math.max(...dailyRevenue.map(d => d.revenue)).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2">
           <AIInsights />
@@ -100,7 +171,7 @@ export default function DashboardPage() {
                       <p className="text-xs text-muted-foreground">Processed by Cashier Rahul • 5 mins ago</p>
                     </div>
                     <div className="ml-auto font-bold text-accent">
-                      +₹{ (Math.random() * 5000 + 100).toFixed(2) }
+                      +₹{(1000 + i * 500).toFixed(2)}
                     </div>
                   </div>
                 ))}

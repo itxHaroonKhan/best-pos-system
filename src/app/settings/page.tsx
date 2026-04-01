@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -11,8 +13,28 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Store, Bell, CreditCard, Palette, Save } from "lucide-react"
+import { useTheme } from "@/contexts/theme-context"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
+  const { theme, toggleTheme } = useTheme()
+  const { toast } = useToast()
+
+  const handleSaveChanges = () => {
+    toast({
+      title: "Settings saved",
+      description: "Your preferences have been updated successfully.",
+    })
+  }
+
+  const handleThemeChange = (value: string) => {
+    if (value === "dark" && theme !== "dark") {
+      toggleTheme()
+    } else if (value === "light" && theme !== "light") {
+      toggleTheme()
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-1">
@@ -127,16 +149,18 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Theme</label>
-              <Select defaultValue="light">
+              <Select value={theme} onValueChange={handleThemeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="light">Light</SelectItem>
                   <SelectItem value="dark">Dark</SelectItem>
-                  <SelectItem value="auto">Auto</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Current theme: <span className="font-medium">{theme}</span>
+              </p>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Items per page</label>
@@ -157,7 +181,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex justify-end">
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={handleSaveChanges}>
           <Save className="w-4 h-4" />
           Save Changes
         </Button>

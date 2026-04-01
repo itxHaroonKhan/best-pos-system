@@ -1,277 +1,448 @@
 "use client"
 
 import * as React from "react"
-import { Plus, Search, Filter, AlertTriangle, MoreVertical, Package, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertTriangle, Package, TrendingUp, TrendingDown } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { ProductFormDialog } from "@/components/inventory/product-form-dialog"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
-interface InventoryItem {
+interface Product {
   id: string
-  sku: string
   name: string
   category: string
   price: number
   stock: number
-  threshold: number
+  minStock: number
+  sku: string
+  status: "in-stock" | "low-stock" | "out-of-stock"
 }
 
-const MOCK_INVENTORY: InventoryItem[] = [
-  { id: "1", sku: "WMS-001", name: "Wireless Mouse", category: "Electronics", price: 850, stock: 45, threshold: 10 },
-  { id: "2", sku: "MKB-002", name: "Mechanical Keyboard", category: "Electronics", price: 4500, stock: 8, threshold: 10 },
-  { id: "3", sku: "MON-003", name: "HD Monitor 24\"", category: "Electronics", price: 12000, stock: 5, threshold: 5 },
-  { id: "4", sku: "USB-004", name: "USB-C Cable 2m", category: "Accessories", price: 450, stock: 150, threshold: 20 },
-  { id: "5", sku: "HST-005", name: "Gaming Headset", category: "Electronics", price: 3200, stock: 15, threshold: 5 },
-  { id: "6", sku: "LPS-006", name: "Laptop Stand", category: "Accessories", price: 1200, stock: 2, threshold: 5 },
+const initialProducts: Product[] = [
+  { id: "1", name: "Grilled Salmon Steak", category: "Lunch", price: 15, stock: 25, minStock: 10, sku: "LUN-001", status: "in-stock" },
+  { id: "2", name: "Tofu Poke Bowl", category: "Salad", price: 7, stock: 8, minStock: 10, sku: "SAL-002", status: "low-stock" },
+  { id: "3", name: "Pasta with Roast Beef", category: "Pasta", price: 10, stock: 0, minStock: 15, sku: "PAS-003", status: "out-of-stock" },
+  { id: "4", name: "Beef Steak", category: "Beef", price: 30, stock: 15, minStock: 10, sku: "BEE-004", status: "in-stock" },
+  { id: "5", name: "Shrimp Rice Bowl", category: "Rice", price: 6, stock: 35, minStock: 20, sku: "RIC-005", status: "in-stock" },
+  { id: "6", name: "Apple Stuffed Pancake", category: "Dessert", price: 35, stock: 5, minStock: 10, sku: "DES-006", status: "low-stock" },
+  { id: "7", name: "Chicken Quinoa & Herbs", category: "Chicken", price: 12, stock: 22, minStock: 15, sku: "CHI-007", status: "in-stock" },
+  { id: "8", name: "Vegetable Shrimp", category: "Salad", price: 10, stock: 28, minStock: 15, sku: "SAL-008", status: "in-stock" },
 ]
+
+const categories = ["All", "Lunch", "Salad", "Pasta", "Beef", "Rice", "Dessert", "Chicken"]
 
 export default function InventoryPage() {
   const { toast } = useToast()
+  const [products, setProducts] = React.useState<Product[]>(initialProducts)
   const [searchTerm, setSearchTerm] = React.useState("")
-  const [isFormOpen, setIsFormOpen] = React.useState(false)
-  const [editingProduct, setEditingProduct] = React.useState<InventoryItem | null>(null)
-  const [inventory, setInventory] = React.useState(MOCK_INVENTORY)
-  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
-  const [productToDelete, setProductToDelete] = React.useState<InventoryItem | null>(null)
+  const [selectedCategory, setSelectedCategory] = React.useState("All")
+  const [isAddOpen, setIsAddOpen] = React.useState(false)
+  const [editingProduct, setEditingProduct] = React.useState<Product | null>(null)
+  const [newProduct, setNewProduct] = React.useState<Partial<Product>>({
+    name: "",
+    category: "Lunch",
+    price: 0,
+    stock: 0,
+    minStock: 10,
+    sku: "",
+  })
 
-  const filteredInventory = inventory.filter(item =>
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const handleEdit = (product: InventoryItem) => {
-    setEditingProduct(product)
-    setIsFormOpen(true)
+  const stats = {
+    total: products.length,
+    inStock: products.filter(p => p.status === "in-stock").length,
+    lowStock: products.filter(p => p.status === "low-stock").length,
+    outOfStock: products.filter(p => p.status === "out-of-stock").length,
   }
 
-  const handleDeleteClick = (product: InventoryItem) => {
-    setProductToDelete(product)
-    setDeleteDialogOpen(true)
-  }
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = selectedCategory === "All" || p.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
 
-  const handleDeleteConfirm = () => {
-    if (productToDelete) {
-      setInventory(prev => prev.filter(item => item.id !== productToDelete.id))
+  const handleAddProduct = () => {
+    if (!newProduct.name || !newProduct.sku) {
       toast({
-        title: "Product Deleted",
-        description: `${productToDelete.name} has been removed from inventory.`,
+        title: "Missing fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
       })
-      setDeleteDialogOpen(false)
-      setProductToDelete(null)
+      return
     }
+
+    const status: Product["status"] = newProduct.stock === 0 ? "out-of-stock" : 
+                                       newProduct.stock! <= newProduct.minStock! ? "low-stock" : "in-stock"
+
+    const product: Product = {
+      id: Date.now().toString(),
+      name: newProduct.name!,
+      category: newProduct.category || "Lunch",
+      price: newProduct.price || 0,
+      stock: newProduct.stock || 0,
+      minStock: newProduct.minStock || 10,
+      sku: newProduct.sku!,
+      status,
+    }
+
+    setProducts(prev => [...prev, product])
+    setIsAddOpen(false)
+    setNewProduct({ name: "", category: "Lunch", price: 0, stock: 0, minStock: 10, sku: "" })
+    
+    toast({
+      title: "Product added",
+      description: `${product.name} has been added to inventory.`,
+    })
   }
 
-  const handleAddNew = () => {
+  const handleUpdateProduct = () => {
+    if (!editingProduct) return
+
+    setProducts(prev => prev.map(p => 
+      p.id === editingProduct.id ? editingProduct : p
+    ))
+
+    toast({
+      title: "Product updated",
+      description: `${editingProduct.name} has been updated.`,
+    })
     setEditingProduct(null)
-    setIsFormOpen(true)
+  }
+
+  const handleDeleteProduct = (id: string, name: string) => {
+    setProducts(prev => prev.filter(p => p.id !== id))
+    toast({
+      title: "Product deleted",
+      description: `${name} has been removed from inventory.`,
+      variant: "destructive",
+    })
+  }
+
+  const getStatusBadge = (status: Product["status"]) => {
+    switch (status) {
+      case "in-stock":
+        return <Badge className="bg-green-500 text-white">In Stock</Badge>
+      case "low-stock":
+        return <Badge className="bg-orange-500 text-white">Low Stock</Badge>
+      case "out-of-stock":
+        return <Badge className="bg-red-500 text-white">Out of Stock</Badge>
+    }
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Inventory Management</h1>
-          <p className="text-muted-foreground">Manage products, track stock, and configure alerts.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-primary">Inventory</h1>
+          <p className="text-muted-foreground">Manage your products and stock levels</p>
         </div>
-        <Button className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleAddNew}>
+        <Button onClick={() => setIsAddOpen(true)} className="gap-2">
           <Plus className="w-4 h-4" />
-          Add New Product
+          Add Product
         </Button>
       </div>
 
-      <ProductFormDialog 
-        open={isFormOpen} 
-        onOpenChange={setIsFormOpen} 
-        editingProduct={editingProduct}
-      />
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              Are You Sure?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the product
-              <strong> "{productToDelete?.name}"</strong> from your inventory.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteConfirm}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Yes, Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-primary/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total SKUs</CardTitle>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">124</div>
-            <p className="text-xs text-muted-foreground">+5 added this month</p>
+            <div className="text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
-        <Card className="bg-accent/10">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">In Stock</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹12,45,200</div>
-            <p className="text-xs text-muted-foreground">Current wholesale value</p>
+            <div className="text-2xl font-bold text-green-500">{stats.inStock}</div>
           </CardContent>
         </Card>
-        <Card className="bg-destructive/5">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">8</div>
-            <p className="text-xs text-muted-foreground">Requiring immediate attention</p>
+            <div className="text-2xl font-bold text-orange-500">{stats.lowStock}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+            <TrendingDown className="h-4 w-4 text-red-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-500">{stats.outOfStock}</div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Filters */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or SKU..."
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map(cat => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Products Table */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2 flex-1 max-w-md">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search by SKU, Product Name, or Category..." 
-                  className="pl-10 h-11"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-                    onClick={() => setSearchTerm("")}
-                  >
-                    <span className="sr-only">Clear search</span>
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px]">✕</span>
-                  </Button>
-                )}
-              </div>
-              <Button variant="outline" size="icon" className="h-11 w-11 shrink-0">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button variant="outline" className="h-11 shrink-0">
-              <Package className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
+          <CardTitle>Products ({filteredProducts.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Product Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock Level</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {MOCK_INVENTORY.map((item) => {
-                const isLow = item.stock <= item.threshold
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-mono text-xs">{item.sku}</TableCell>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell>{item.category}</TableCell>
-                    <TableCell>₹{item.price}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span>{item.stock}</span>
-                        {isLow && <AlertTriangle className="h-4 w-4 text-destructive" />}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {isLow ? (
-                        <Badge variant="destructive">Low Stock</Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-accent/20 text-accent-foreground border-accent/20">In Stock</Badge>
+          <div className="rounded-md border">
+            <div className="grid grid-cols-6 gap-4 p-4 bg-muted/50 font-medium text-sm">
+              <div className="col-span-2">Product</div>
+              <div>SKU</div>
+              <div>Category</div>
+              <div>Price</div>
+              <div>Stock</div>
+              <div>Status</div>
+              <div className="col-span-2">Actions</div>
+            </div>
+            <div className="divide-y">
+              {filteredProducts.map((product) => (
+                <div key={product.id} className="grid grid-cols-6 gap-4 p-4 items-center hover:bg-muted/30 transition-colors">
+                  <div className="col-span-2">
+                    <p className="font-medium">{product.name}</p>
+                    <p className="text-xs text-muted-foreground">Min: {product.minStock}</p>
+                  </div>
+                  <div className="text-sm font-mono">{product.sku}</div>
+                  <div><Badge variant="secondary">{product.category}</Badge></div>
+                  <div className="font-semibold">${product.price.toFixed(2)}</div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${product.stock <= product.minStock ? 'text-red-500' : ''}`}>
+                        {product.stock}
+                      </span>
+                      {product.stock <= product.minStock && (
+                        <AlertTriangle className="w-4 h-4 text-orange-500" />
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEdit(item)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Package className="w-4 h-4 mr-2" />
-                            Update Stock
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive focus:text-destructive"
-                            onClick={() => handleDeleteClick(item)}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Product
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+                    </div>
+                  </div>
+                  <div>{getStatusBadge(product.status)}</div>
+                  <div className="col-span-2 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditingProduct(product)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteProduct(product.id, product.name)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Add Product Dialog */}
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Product</DialogTitle>
+            <DialogDescription>
+              Enter the product details below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="name">Product Name</Label>
+              <Input
+                id="name"
+                value={newProduct.name}
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                placeholder="Enter product name"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="sku">SKU</Label>
+                <Input
+                  id="sku"
+                  value={newProduct.sku}
+                  onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                  placeholder="e.g., LUN-001"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category</Label>
+                <Select value={newProduct.category} onValueChange={(v) => setNewProduct({ ...newProduct, category: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.filter(c => c !== "All").map(cat => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="stock">Stock</Label>
+                <Input
+                  id="stock"
+                  type="number"
+                  value={newProduct.stock}
+                  onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="minStock">Min Stock</Label>
+                <Input
+                  id="minStock"
+                  type="number"
+                  value={newProduct.minStock}
+                  onChange={(e) => setNewProduct({ ...newProduct, minStock: parseInt(e.target.value) || 10 })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+            <Button onClick={handleAddProduct}>Add Product</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+            <DialogDescription>
+              Update product details.
+            </DialogDescription>
+          </DialogHeader>
+          {editingProduct && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-name">Product Name</Label>
+                <Input
+                  id="edit-name"
+                  value={editingProduct.name}
+                  onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-sku">SKU</Label>
+                  <Input
+                    id="edit-sku"
+                    value={editingProduct.sku}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-category">Category</Label>
+                  <Select value={editingProduct.category} onValueChange={(v) => setEditingProduct({ ...editingProduct, category: v })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.filter(c => c !== "All").map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-price">Price</Label>
+                  <Input
+                    id="edit-price"
+                    type="number"
+                    value={editingProduct.price}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-stock">Stock</Label>
+                  <Input
+                    id="edit-stock"
+                    type="number"
+                    value={editingProduct.stock}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-minStock">Min Stock</Label>
+                  <Input
+                    id="edit-minStock"
+                    type="number"
+                    value={editingProduct.minStock}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, minStock: parseInt(e.target.value) || 10 })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancel</Button>
+            <Button onClick={handleUpdateProduct}>Update Product</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

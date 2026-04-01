@@ -4,39 +4,60 @@
 
 @layer base {
   :root {
-    --background: 189 23% 96%;
-    --foreground: 195 66% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 195 66% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 195 66% 10%;
-    --primary: 195 66% 36%;
-    --primary-foreground: 189 23% 98%;
-    --secondary: 189 23% 90%;
-    --secondary-foreground: 195 66% 30%;
-    --muted: 189 20% 92%;
-    --muted-foreground: 195 40% 45%;
-    --accent: 155 69% 54%;
-    --accent-foreground: 155 69% 5%;
-    --destructive: 0 84.2% 60.2%;
+    /* Cosmic Dark Background */
+    --background: 240 20% 8%;
+    --foreground: 210 40% 98%;
+
+    /* Cards & Surfaces */
+    --card: 240 25% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 240 25% 12%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Primary - Electric Cyan */
+    --primary: 183 100% 65%;
+    --primary-foreground: 240 20% 8%;
+
+    /* Secondary - Soft purple glow */
+    --secondary: 262 80% 65%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Muted / Subtle */
+    --muted: 240 15% 20%;
+    --muted-foreground: 210 20% 70%;
+
+    /* Accent - Magenta/Purple neon */
+    --accent: 280 85% 70%;
+    --accent-foreground: 240 20% 8%;
+
+    /* Destructive */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 195 20% 88%;
-    --input: 195 20% 88%;
-    --ring: 195 66% 36%;
-    --radius: 0.75rem;
-    --chart-1: 195 66% 36%;
-    --chart-2: 155 69% 54%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --sidebar-background: 195 66% 15%;
-    --sidebar-foreground: 189 23% 95%;
-    --sidebar-primary: 155 69% 54%;
-    --sidebar-primary-foreground: 155 69% 5%;
-    --sidebar-accent: 195 66% 25%;
-    --sidebar-accent-foreground: 189 23% 100%;
-    --sidebar-border: 195 66% 20%;
-    --sidebar-ring: 155 69% 54%;
+
+    /* Borders & Inputs */
+    --border: 240 20% 25%;
+    --input: 240 20% 25%;
+    --ring: 183 100% 65%;
+
+    --radius: 1.25rem;
+
+    /* Chart colors */
+    --chart-1: 183 100% 65%;
+    --chart-2: 280 85% 70%;
+    --chart-3: 240 60% 55%;
+    --chart-4: 200 90% 70%;
+    --chart-5: 270 85% 75%;
+
+    /* Sidebar */
+    --sidebar-background: 240 25% 10%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 183 100% 65%;
+    --sidebar-primary-foreground: 240 20% 8%;
+    --sidebar-accent: 262 80% 65%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 240 20% 20%;
+    --sidebar-ring: 183 100% 65%;
   }
 }
 
@@ -44,10 +65,27 @@
   * {
     @apply border-border;
   }
+
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-sans;
+    background-image: 
+      radial-gradient(circle at 30% 20%, rgba(103, 232, 249, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, rgba(192, 132, 252, 0.06) 0%, transparent 50%);
   }
+
+  .neon-glow {
+    box-shadow: 0 0 15px -3px rgb(103 232 249 / 0.5),
+                0 0 6px -4px rgb(192 132 252 / 0.4);
+  }
+
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline;
+    @apply font-bold tracking-tight;
+    color: hsl(var(--foreground));
+  }
+
+  .card {
+    background: hsl(var(--card));
+    box-shadow: 0 10px 30px -15px rgb(0 0 0 / 0.5),
+                inset 0 1px 0 0 rgba(255,255,255,0.05);
   }
 }
