@@ -10,7 +10,8 @@ import {
   Settings,
   LogOut,
   ChevronRight,
-  Store
+  Store,
+  Menu
 } from "lucide-react"
 
 import {
@@ -24,6 +25,7 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
+  SidebarTrigger,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"

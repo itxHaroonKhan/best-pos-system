@@ -1,9 +1,11 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { Button } from '@/components/ui/button';
+import { Menu, PanelLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Elites | Advanced POS System',
@@ -25,14 +27,21 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider>
           <SidebarProvider defaultOpen={true}>
-            <div className="flex min-h-screen w-full bg-background">
-              <AppSidebar />
-              <SidebarInset>
-                <main className="flex-1 p-6 overflow-y-auto">
+            <AppSidebar />
+            <SidebarInset>
+              <div className="flex flex-col min-h-screen">
+                {/* Mobile Header with Sidebar Trigger */}
+                <header className="sticky top-0 z-50 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 h-14 lg:hidden">
+                  <div className="flex items-center gap-2">
+                    <SidebarTrigger className="md:hidden" />
+                    <span className="font-semibold text-sm">Elites POS</span>
+                  </div>
+                </header>
+                <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
                   {children}
                 </main>
-              </SidebarInset>
-            </div>
+              </div>
+            </SidebarInset>
           </SidebarProvider>
           <Toaster />
         </ThemeProvider>

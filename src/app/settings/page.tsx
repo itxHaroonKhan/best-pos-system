@@ -17,7 +17,7 @@ import { useTheme } from "@/contexts/theme-context"
 import { useToast } from "@/hooks/use-toast"
 
 export default function SettingsPage() {
-  const { theme, toggleTheme } = useTheme()
+  const { theme, toggleTheme, setTheme } = useTheme()
   const { toast } = useToast()
 
   const handleSaveChanges = () => {
@@ -28,11 +28,11 @@ export default function SettingsPage() {
   }
 
   const handleThemeChange = (value: string) => {
-    if (value === "dark" && theme !== "dark") {
-      toggleTheme()
-    } else if (value === "light" && theme !== "light") {
-      toggleTheme()
-    }
+    setTheme(value as "light" | "dark")
+    toast({
+      title: "Theme changed",
+      description: `Switched to ${value} mode.`,
+    })
   }
 
   return (
