@@ -136,53 +136,53 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Customers</h1>
-          <p className="text-muted-foreground">Manage your customer relationships</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Customers</h1>
+          <p className="text-sm text-muted-foreground">Manage your customer relationships</p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2">
+        <Button onClick={() => setIsAddOpen(true)} className="gap-2 w-full sm:w-auto">
           <Plus className="w-4 h-4" />
-          Add Customer
+          <span>Add Customer</span>
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Customers</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
             <p className="text-xs text-muted-foreground">All time</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Active</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">{stats.active}</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-500">{stats.active}</div>
             <p className="text-xs text-muted-foreground">Active customers</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Inactive</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-muted-foreground">{stats.inactive}</div>
+            <div className="text-xl sm:text-2xl font-bold text-muted-foreground">{stats.inactive}</div>
             <p className="text-xs text-muted-foreground">No recent orders</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{stats.revenue.toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold">₹{stats.revenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">From all customers</p>
           </CardContent>
         </Card>
@@ -272,7 +272,7 @@ export default function CustomersPage() {
 
       {/* Add Customer Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-h-[unset]">
           <DialogHeader>
             <DialogTitle>Add New Customer</DialogTitle>
             <DialogDescription>
@@ -309,16 +309,16 @@ export default function CustomersPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddCustomer}>Add Customer</Button>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+            <Button onClick={handleAddCustomer} className="w-full sm:w-auto">Add Customer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Customer Dialog */}
       <Dialog open={!!editingCustomer} onOpenChange={() => setEditingCustomer(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-h-[unset]">
           <DialogHeader>
             <DialogTitle>Edit Customer</DialogTitle>
             <DialogDescription>
@@ -366,9 +366,9 @@ export default function CustomersPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingCustomer(null)}>Cancel</Button>
-            <Button onClick={handleUpdateCustomer}>Update Customer</Button>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditingCustomer(null)} className="w-full sm:w-auto">Cancel</Button>
+            <Button onClick={handleUpdateCustomer} className="w-full sm:w-auto">Update Customer</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

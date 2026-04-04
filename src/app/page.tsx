@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
   ArrowUpRight,
   ArrowDownRight,
@@ -13,6 +14,7 @@ import {
   Calendar
 } from "lucide-react"
 import { AIInsights } from "@/components/dashboard/ai-insights"
+import { DonutChart } from "@/components/DonutChart"
 
 export default function DashboardPage() {
   const stats = [
@@ -58,11 +60,23 @@ export default function DashboardPage() {
 
   const maxRevenue = Math.max(...dailyRevenue.map(d => d.revenue))
 
+  const chartdata = [
+    { name: "SolarCells", amount: 4890 },
+    { name: "Glass", amount: 2103 },
+    { name: "JunctionBox", amount: 2050 },
+    { name: "Adhesive", amount: 1300 },
+    { name: "BackSheet", amount: 1100 },
+    { name: "Frame", amount: 700 },
+    { name: "Encapsulant", amount: 200 },
+  ]
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, Admin. Here's what's happening today.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Welcome back, Admin. Here's what's happening today.</p>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -94,65 +108,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Daily Revenue Trends */}
-      <Card className="border-border bg-card/50 backdrop-blur-xl">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Daily Revenue Trends
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Chart Area */}
-            <div className="h-48 flex items-end gap-2 pt-4">
-              {dailyRevenue.map((day) => (
-                <div key={day.day} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="relative w-full flex justify-center">
-                    <div 
-                      className="w-full max-w-[60px] bg-gradient-to-t from-primary/80 to-primary rounded-t-lg transition-all duration-300 group-hover:from-primary group-hover:to-accent cursor-pointer relative"
-                      style={{ height: `${(day.revenue / maxRevenue) * 160}px` }}
-                    >
-                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg whitespace-nowrap z-10">
-                        <p className="text-xs font-bold text-primary">₹{day.revenue.toLocaleString()}</p>
-                        <p className="text-[10px] text-muted-foreground">{day.orders} orders</p>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">{day.day}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Summary Stats */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">Avg Daily Revenue</p>
-                <p className="text-lg font-bold text-primary">
-                  ₹{(dailyRevenue.reduce((a, b) => a + b.revenue, 0) / 7).toFixed(0)}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">Total Orders</p>
-                <p className="text-lg font-bold text-foreground">
-                  {dailyRevenue.reduce((a, b) => a + b.orders, 0)}
-                </p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground mb-1">Best Day</p>
-                <p className="text-lg font-bold text-accent">
-                  Sat ₹{Math.max(...dailyRevenue.map(d => d.revenue)).toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <AIInsights />
-          <Card className="mt-4">
+          <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Activity className="w-5 h-5 text-primary" />
@@ -188,28 +146,120 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {[
-                  { name: "Electronics", val: 65, color: "bg-primary" },
-                  { name: "Accessories", val: 45, color: "bg-accent" },
-                  { name: "Stationary", val: 20, color: "bg-chart-3" },
-                  { name: "Clothing", val: 15, color: "bg-chart-4" }
-                ].map((cat) => (
-                  <div key={cat.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{cat.name}</span>
-                      <span className="text-muted-foreground">{cat.val}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                      <div className={`h-full ${cat.color}`} style={{ width: `${cat.val}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <DonutChart
+                className="mx-auto"
+                data={chartdata}
+                showLabel={true}
+                valueFormatter={(number: number) =>
+                  `$${Intl.NumberFormat("us").format(number).toString()}`
+                }
+              />
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Daily Revenue Trends */}
+      <Card className="border-border bg-gradient-to-br from-card to-muted/30">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              Daily Revenue Trends
+            </CardTitle>
+            <Badge variant="secondary" className="text-xs">This Week</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {/* Chart Area */}
+            <div className="relative h-64 pt-4">
+              {/* Grid Lines */}
+              <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                {[4, 3, 2, 1, 0].map((i) => (
+                  <div key={i} className="w-full border-border/30 border-dashed border-t" />
+                ))}
+              </div>
+              
+              <div className="relative h-full flex items-end gap-3 pb-8">
+                {dailyRevenue.map((day, index) => {
+                  const height = (day.revenue / maxRevenue) * 180
+                  const isBest = day.revenue === maxRevenue
+                  
+                  return (
+                    <div key={day.day} className="flex-1 flex flex-col items-center gap-2 group">
+                      <div className="relative w-full flex justify-center">
+                        <div
+                          className={`w-full max-w-[50px] rounded-t-xl transition-all duration-500 cursor-pointer relative overflow-hidden ${
+                            isBest
+                              ? 'bg-gradient-to-t from-primary via-primary/90 to-accent shadow-lg shadow-primary/20'
+                              : 'bg-gradient-to-t from-primary/60 to-primary/80 hover:from-primary hover:to-primary/90'
+                          }`}
+                          style={{ 
+                            height: `${height}px`,
+                            animationDelay: `${index * 100}ms`
+                          }}
+                        >
+                          {/* Shine Effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          
+                          {/* Tooltip */}
+                          <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-card border border-border rounded-xl px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl z-10 min-w-[120px]">
+                            <p className="text-sm font-bold text-primary">₹{day.revenue.toLocaleString()}</p>
+                            <p className="text-[10px] text-muted-foreground">{day.orders} orders</p>
+                            {isBest && (
+                              <Badge className="mt-1 text-[9px] py-0 px-1.5 bg-accent text-accent-foreground">Best Day</Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`text-xs font-semibold absolute bottom-0 transition-colors ${
+                        isBest ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+                      }`}>
+                        {day.day}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Summary Stats */}
+            <div className="grid grid-cols-3 gap-4 pt-5 border-t border-border bg-card/50 backdrop-blur rounded-xl p-4">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center justify-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-primary/50"></span>
+                  Avg Daily Revenue
+                </p>
+                <p className="text-xl font-bold text-primary">
+                  ₹{(dailyRevenue.reduce((a, b) => a + b.revenue, 0) / 7).toFixed(0)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center justify-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-accent/50"></span>
+                  Total Orders
+                </p>
+                <p className="text-xl font-bold text-foreground">
+                  {dailyRevenue.reduce((a, b) => a + b.orders, 0)}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-2 flex items-center justify-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-green-500/50"></span>
+                  Best Day
+                </p>
+                <p className="text-xl font-bold text-accent">
+                  ₹{Math.max(...dailyRevenue.map(d => d.revenue)).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Insights */}
+      <AIInsights />
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { Search, Minus, Plus, Trash2, CreditCard, Banknote, ShoppingCart, ChevronLeft, ChevronRight, QrCode, Bell, Settings, LogOut, Edit2, Printer } from "lucide-react"
+import { Search, Minus, Plus, Trash2, CreditCard, Banknote, ShoppingCart, Bell, Settings, LogOut, Edit2, Printer, QrCode } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -20,46 +20,51 @@ interface CartItem {
   category: string
 }
 
-interface Order {
-  id: string
-  tableNumber: string
-  itemCount: number
-  timeAgo: string
-  status: "in-kitchen" | "wait-list" | "ready"
+interface MenuItem {
+  id: number
+  name: string
+  category: string
+  price: number
+  stock: number
+  img: string
 }
 
-const menuItems = [
-  { id: 1, name: 'Grilled Salmon Steak', category: 'Lunch', price: 15, stock: 25, img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=300&fit=crop' },
-  { id: 2, name: 'Tofu Poke Bowl', category: 'Salad', price: 7, stock: 30, img: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop' },
-  { id: 3, name: 'Pasta with Roast Beef', category: 'Pasta', price: 10, stock: 20, img: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop' },
-  { id: 4, name: 'Beef Steak', category: 'Beef', price: 30, stock: 15, img: 'https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=400&h=300&fit=crop' },
-  { id: 5, name: 'Shrimp Rice Bowl', category: 'Rice', price: 6, stock: 35, img: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&h=300&fit=crop' },
-  { id: 6, name: 'Apple Stuffed Pancake', category: 'Dessert', price: 35, stock: 18, img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=300&fit=crop' },
-  { id: 7, name: 'Chicken Quinoa & Herbs', category: 'Chicken', price: 12, stock: 22, img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop' },
-  { id: 8, name: 'Vegetable Shrimp', category: 'Salad', price: 10, stock: 28, img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop' },
+const initialMenuItems: MenuItem[] = [
+  { id: 1, name: 'Grilled Salmon Steak', category: 'Special', price: 15, stock: 40, img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=250&fit=crop' },
+  { id: 2, name: 'Tofu Poke Bowl', category: 'Soups', price: 7, stock: 30, img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=250&fit=crop' },
+  { id: 3, name: 'Pasta with Roast Beef', category: 'Special', price: 10, stock: 20, img: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&h=250&fit=crop' },
+  { id: 4, name: 'Beef Steak', category: 'Special', price: 30, stock: 15, img: 'https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=400&h=250&fit=crop' },
+  { id: 5, name: 'Shrimp Rice Bowl', category: 'Soups', price: 6, stock: 35, img: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=250&fit=crop' },
+  { id: 6, name: 'Apple Stuffed Pancake', category: 'Desserts', price: 35, stock: 18, img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=250&fit=crop' },
+  { id: 7, name: 'Chicken Quinoa & Herbs', category: 'Chickens', price: 12, stock: 22, img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=250&fit=crop' },
+  { id: 8, name: 'Vegetable Shrimp', category: 'Soups', price: 10, stock: 0, img: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=250&fit=crop' },
+  { id: 9, name: 'Chocolate Lava Cake', category: 'Desserts', price: 8, stock: 25, img: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400&h=250&fit=crop' },
+  { id: 10, name: 'Tiramisu', category: 'Desserts', price: 9, stock: 20, img: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=250&fit=crop' },
+  { id: 11, name: 'Cheesecake', category: 'Desserts', price: 7, stock: 15, img: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=250&fit=crop' },
+  { id: 12, name: 'Grilled Chicken', category: 'Chickens', price: 14, stock: 30, img: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&h=250&fit=crop' },
+  { id: 13, name: 'Chicken Wings', category: 'Chickens', price: 11, stock: 18, img: 'https://images.unsplash.com/photo-1567620832900-627979e3e12c?w=400&h=250&fit=crop' },
+  { id: 14, name: 'Chicken Tikka', category: 'Chickens', price: 13, stock: 0, img: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=250&fit=crop' },
+  { id: 15, name: 'Tomato Soup', category: 'Soups', price: 5, stock: 40, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=250&fit=crop' },
+  { id: 16, name: 'Mushroom Soup', category: 'Soups', price: 6, stock: 28, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=250&fit=crop' },
+  { id: 17, name: 'Ice Cream Sundae', category: 'Desserts', price: 6, stock: 22, img: 'https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?w=400&h=250&fit=crop' },
+  { id: 18, name: 'Butter Chicken', category: 'Chickens', price: 15, stock: 20, img: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=250&fit=crop' },
 ]
 
-const menuCategories = [
-  { id: 'all', name: '🍽️ All Menu', count: 154 },
-  { id: 'special', name: '⭐ Special', count: 19 },
-  { id: 'soups', name: '🍲 Soups', count: 3 },
-  { id: 'desserts', name: '🍰 Desserts', count: 19 },
-  { id: 'chickens', name: '🍗 Chickens', count: 10 },
+const categories = [
+  { id: 'all', name: '🍽️ All Menu', count: 18, color: 'from-gray-500 to-gray-600' },
+  { id: 'special', name: '⭐ Special', count: 3, color: 'from-yellow-500 to-orange-500' },
+  { id: 'soups', name: '🍲 Soups', count: 5, color: 'from-blue-500 to-cyan-500' },
+  { id: 'desserts', name: '🍰 Desserts', count: 5, color: 'from-pink-500 to-rose-500' },
+  { id: 'chickens', name: '🍗 Chickens', count: 5, color: 'from-amber-500 to-orange-500' },
 ]
 
-const orderLineData: Order[] = [
-  { id: 'F0027', tableNumber: '03', itemCount: 8, timeAgo: '2 mins ago', status: 'in-kitchen' },
-  { id: 'F0028', tableNumber: '07', itemCount: 3, timeAgo: 'Just Now', status: 'wait-list' },
-  { id: 'F0019', tableNumber: '09', itemCount: 2, timeAgo: '25 mins ago', status: 'ready' },
-]
-
-const orderFilters = [
-  { id: 'all', name: 'All', count: 78 },
-  { id: 'dine-in', name: 'Dine in', count: 4 },
-  { id: 'wait-list', name: 'Wait List', count: 3 },
-  { id: 'take-away', name: 'Take Away', count: 12 },
-  { id: 'served', name: 'Served', count: 59 },
-]
+const categoryMapping: Record<string, string[]> = {
+  all: ['Special', 'Soups', 'Desserts', 'Chickens'],
+  special: ['Special'],
+  soups: ['Soups'],
+  desserts: ['Desserts'],
+  chickens: ['Chickens'],
+}
 
 export default function POSPage() {
   const { toast } = useToast()
@@ -68,18 +73,31 @@ export default function POSPage() {
   const [discount, setDiscount] = React.useState(0)
   const [isPaymentOpen, setIsPaymentOpen] = React.useState(false)
   const [selectedCategory, setSelectedCategory] = React.useState('all')
-  const [selectedFilter, setSelectedFilter] = React.useState('all')
   const [cartItems, setCartItems] = React.useState<Record<string, number>>({})
-  const [currentTable, setCurrentTable] = React.useState({ number: '04', order: 'F0030', people: 2 })
+  const [menuItems, setMenuItems] = React.useState<MenuItem[]>(initialMenuItems)
+  const [currentTable] = React.useState({ number: '04', order: 'F0030', people: 2 })
 
-  const filteredProducts = menuItems.filter(p =>
-    selectedCategory === 'all' || p.category.toLowerCase() === selectedCategory.toLowerCase()
-  ).filter(p =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredProducts = menuItems.filter(p => {
+    const matchesCategory = categoryMapping[selectedCategory]?.includes(p.category) || selectedCategory === 'all'
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
 
   const addToCart = (product: typeof menuItems[0]) => {
+    if (product.stock <= 0) {
+      toast({
+        title: "Out of Stock",
+        description: `${product.name} is currently unavailable.`,
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Stock ko 1 kam karo
+    setMenuItems(prev => prev.map(m => 
+      m.id === product.id ? { ...m, stock: m.stock - 1 } : m
+    ))
+
     setCartItems(prev => {
       const current = prev[product.id.toString()] || 0
       return { ...prev, [product.id.toString()]: current + 1 }
@@ -93,11 +111,27 @@ export default function POSPage() {
     })
     toast({
       title: "Added to cart",
-      description: `${product.name} added to transaction.`,
+      description: `${product.name} added. Stock: ${product.stock - 1} left`,
     })
   }
 
   const updateQuantity = (id: string, delta: number) => {
+    const cartItem = cart.find(i => i.id === id)
+    if (!cartItem) return
+
+    const menuItem = menuItems.find(m => m.id === parseInt(id))
+    if (!menuItem) return
+
+    // Agar delta positive hai aur stock nahi hai toh return
+    if (delta > 0 && menuItem.stock <= 0) {
+      toast({
+        title: "Out of Stock",
+        description: `Cannot add more. ${menuItem.name} is out of stock.`,
+        variant: "destructive",
+      })
+      return
+    }
+
     setCart(prev => prev.map(item => {
       if (item.id === id) {
         const newQty = Math.max(1, item.quantity + delta)
@@ -114,9 +148,27 @@ export default function POSPage() {
       }
       return { ...prev, [id]: newValue }
     })
+
+    // Stock update karo
+    setMenuItems(prev => prev.map(m => {
+      if (m.id === parseInt(id)) {
+        return delta > 0 
+          ? { ...m, stock: m.stock - 1 }  // Add more = stock -1
+          : { ...m, stock: m.stock + 1 }  // Remove = stock +1
+      }
+      return m
+    }))
   }
 
   const removeFromCart = (id: string) => {
+    const cartItem = cart.find(i => i.id === id)
+    if (cartItem) {
+      // Stock wapas add karo
+      setMenuItems(prev => prev.map(m => 
+        m.id === parseInt(id) ? { ...m, stock: m.stock + cartItem.quantity } : m
+      ))
+    }
+
     setCart(prev => prev.filter(item => item.id !== id))
     setCartItems(prev => {
       const { [id]: _, ...rest } = prev
@@ -124,18 +176,30 @@ export default function POSPage() {
     })
     toast({
       title: "Item removed",
-      description: "Item has been removed from cart.",
+      description: `${cartItem?.name || 'Item'} removed. Stock restored.`,
       variant: "destructive",
     })
   }
 
   const clearCart = () => {
+    // Saara stock wapas karo
+    setMenuItems(prev => {
+      const updated = [...prev]
+      cart.forEach(cartItem => {
+        const idx = updated.findIndex(m => m.id.toString() === cartItem.id)
+        if (idx !== -1) {
+          updated[idx] = { ...updated[idx], stock: updated[idx].stock + cartItem.quantity }
+        }
+      })
+      return updated
+    })
+
     setCart([])
     setCartItems({})
     setDiscount(0)
     toast({
       title: "Cart cleared",
-      description: "All items have been removed.",
+      description: "All items removed and stock restored.",
     })
   }
 
@@ -160,29 +224,17 @@ export default function POSPage() {
     setCart([])
     setCartItems({})
     setDiscount(0)
+    setMenuItems(prev => prev.map(m => m.stock < 0 ? { ...m, stock: 0 } : m)) // Stock negative nahi hona chahiye
     toast({
       title: "Payment successful",
       description: "Order has been placed successfully.",
     })
   }
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'in-kitchen':
-        return { bg: 'bg-teal-50', border: 'border-teal-300', badge: 'bg-teal-500', text: 'text-teal-700' }
-      case 'wait-list':
-        return { bg: 'bg-orange-50', border: 'border-orange-300', badge: 'bg-orange-500', text: 'text-orange-700' }
-      case 'ready':
-        return { bg: 'bg-purple-50', border: 'border-purple-300', badge: 'bg-purple-500', text: 'text-purple-700' }
-      default:
-        return { bg: 'bg-gray-50', border: 'border-gray-300', badge: 'bg-gray-500', text: 'text-gray-700' }
-    }
-  }
-
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-screen w-full flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-card border border-border px-6 py-3">
+      <header className="bg-card border-b border-border px-6 py-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           {/* Logo Section */}
           <div className="flex items-center gap-3">
@@ -238,38 +290,30 @@ export default function POSPage() {
       />
 
       {/* Main Content */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 min-h-0">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 min-h-0 overflow-hidden">
         {/* Foodies Menu */}
-        <div className="lg:col-span-8 flex flex-col gap-4 min-h-0 overflow-auto">
+        <div className="lg:col-span-8 flex flex-col gap-4 min-h-0">
 
           {/* Foodies Menu Section */}
-          <Card className="border border-border bg-card rounded-2xl overflow-hidden shadow-xl flex-1">
-            <CardHeader className="pb-3 border-b border-border">
+          <Card className="border border-border bg-card rounded-2xl overflow-hidden shadow-xl flex-1 flex flex-col">
+            <CardHeader className="pb-3 border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-bold text-foreground flex items-center gap-2">
                   <span className="text-xl">🍕</span>
                   Foodies Menu
                 </CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" className="rounded-full h-8 w-8 border-border hover:bg-muted">
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="rounded-full h-8 w-8 border-border hover:bg-muted">
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4 space-y-4">
+            <CardContent className="p-4 space-y-4 flex-1 min-h-0 overflow-hidden flex flex-col">
               {/* Category Tabs */}
-              <div className="grid grid-cols-5 gap-2">
-                {menuCategories.map((cat) => (
+              <div className="grid grid-cols-5 gap-2 flex-shrink-0">
+                {categories.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`p-2.5 rounded-xl border-2 transition-all ${
                       selectedCategory === cat.id 
-                        ? 'bg-gradient-to-r from-primary to-secondary border-primary text-white shadow-lg scale-105' 
+                        ? `bg-gradient-to-r ${cat.color} border-transparent text-white shadow-lg scale-105` 
                         : 'bg-card border-border text-muted-foreground hover:border-primary'
                     }`}
                   >
@@ -280,26 +324,36 @@ export default function POSPage() {
               </div>
 
               {/* Menu Grid */}
-              <ScrollArea className="h-[450px]">
+              <ScrollArea className="flex-1 min-h-0">
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
                   {filteredProducts.map((product) => {
                     const quantity = cartItems[product.id.toString()] || 0
+                    const isOutOfStock = product.stock <= 0
+                    
                     return (
                       <div
                         key={product.id}
-                        onClick={() => addToCart(product)}
-                        className={`group relative flex flex-col text-left p-3 rounded-xl border-2 transition-all duration-300 overflow-hidden cursor-pointer ${
-                          quantity > 0
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary bg-card'
+                        onClick={() => !isOutOfStock && addToCart(product)}
+                        className={`group relative flex flex-col text-left p-3 rounded-xl border-2 transition-all duration-300 overflow-hidden ${
+                          isOutOfStock
+                            ? 'opacity-60 border-border cursor-not-allowed'
+                            : quantity > 0
+                              ? 'border-primary bg-primary/10 cursor-pointer'
+                              : 'border-border hover:border-primary bg-card cursor-pointer'
                         }`}
                       >
                         <div className="relative h-36 mb-3 rounded-lg overflow-hidden bg-muted">
-                          <img
+                          <Image
                             src={product.img}
                             alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            fill
+                            className={`object-cover group-hover:scale-110 transition-transform duration-300 ${isOutOfStock ? 'grayscale' : ''}`}
                           />
+                          {isOutOfStock && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                              <Badge className="bg-red-500 text-white text-xs">❌ Out of Stock</Badge>
+                            </div>
+                          )}
                         </div>
                         <div className="mb-2 flex-1">
                           <Badge className={`text-[10px] mb-1.5 font-semibold border-0 ${
@@ -308,27 +362,38 @@ export default function POSPage() {
                           <h3 className="font-semibold text-sm line-clamp-2 text-foreground leading-tight">{product.name}</h3>
                         </div>
                         <div className="flex items-center justify-between mt-auto">
-                          <span className="text-primary font-bold text-base">${product.price}.00</span>
-                          {quantity === 0 ? (
-                            <div className="w-7 h-7 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 flex items-center justify-center transition-all shadow-md">
-                              <Plus className="w-3.5 h-3.5 text-white" />
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1 bg-card rounded-full shadow-md border-2 border-primary">
-                              <div
-                                onClick={(e) => { e.stopPropagation(); updateQuantity(product.id.toString(), -1) }}
-                                className="w-6 h-6 rounded-full hover:bg-primary/10 flex items-center justify-center transition-colors cursor-pointer"
-                              >
-                                <Minus className="w-2.5 h-2.5 text-primary" />
-                              </div>
-                              <span className="w-4 text-center text-xs font-bold text-primary">{quantity}</span>
-                              <div
-                                onClick={(e) => { e.stopPropagation(); updateQuantity(product.id.toString(), 1) }}
-                                className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 flex items-center justify-center transition-all cursor-pointer"
-                              >
-                                <Plus className="w-2.5 h-2.5 text-white" />
-                              </div>
-                            </div>
+                          <div>
+                            <span className="text-primary font-bold text-base">${product.price}.00</span>
+                            <p className={`text-[10px] font-semibold ${
+                              isOutOfStock ? 'text-red-500' : product.stock <= 5 ? 'text-orange-500' : 'text-green-600'
+                            }`}>
+                              {isOutOfStock ? '❌ Out' : `✓ ${product.stock} left`}
+                            </p>
+                          </div>
+                          {!isOutOfStock && (
+                            <>
+                              {quantity === 0 ? (
+                                <div className="w-7 h-7 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 flex items-center justify-center transition-all shadow-md">
+                                  <Plus className="w-3.5 h-3.5 text-white" />
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 bg-card rounded-full shadow-md border-2 border-primary">
+                                  <div
+                                    onClick={(e) => { e.stopPropagation(); updateQuantity(product.id.toString(), -1) }}
+                                    className="w-6 h-6 rounded-full hover:bg-primary/10 flex items-center justify-center transition-colors cursor-pointer"
+                                  >
+                                    <Minus className="w-2.5 h-2.5 text-primary" />
+                                  </div>
+                                  <span className="w-4 text-center text-xs font-bold text-primary">{quantity}</span>
+                                  <div
+                                    onClick={(e) => { e.stopPropagation(); updateQuantity(product.id.toString(), 1) }}
+                                    className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 flex items-center justify-center transition-all cursor-pointer"
+                                  >
+                                    <Plus className="w-2.5 h-2.5 text-white" />
+                                  </div>
+                                </div>
+                              )}
+                            </>
                           )}
                         </div>
                       </div>
@@ -343,14 +408,17 @@ export default function POSPage() {
         {/* Cart / Order Summary Sidebar */}
         <Card className="lg:col-span-4 flex flex-col shadow-xl border border-border overflow-hidden bg-card rounded-2xl">
           {/* Table Info */}
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-semibold text-foreground">Table No #{currentTable.number}</h3>
               <div className="flex gap-2">
                 <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted transition-colors">
                   <Edit2 className="w-4 h-4 text-muted-foreground" />
                 </button>
-                <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/20 transition-colors">
+                <button 
+                  onClick={clearCart}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-destructive/20 transition-colors"
+                >
                   <Trash2 className="w-4 h-4 text-destructive" />
                 </button>
               </div>
@@ -360,8 +428,8 @@ export default function POSPage() {
           </div>
 
           {/* Ordered Items */}
-          <CardContent className="flex-1 p-4 min-h-0">
-            <ScrollArea className="h-[350px]">
+          <CardContent className="flex-1 p-4 min-h-0 overflow-hidden flex flex-col">
+            <ScrollArea className="flex-1 min-h-0">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="font-semibold text-foreground">Ordered Items</h4>
                 <span className="text-sm text-muted-foreground">{cart.length}</span>
@@ -396,7 +464,7 @@ export default function POSPage() {
             </ScrollArea>
 
             {/* Payment Summary */}
-            <div className="mt-4 pt-4 border-t border-border">
+            <div className="mt-4 pt-4 border-t border-border flex-shrink-0">
               <h4 className="font-semibold text-foreground mb-3">Payment Summary</h4>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
@@ -420,7 +488,7 @@ export default function POSPage() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex-col bg-muted/30 p-4 space-y-3 border-t border-border">
+          <CardFooter className="flex-col bg-muted/30 p-4 space-y-3 border-t border-border flex-shrink-0">
             {/* Payment Method */}
             <div>
               <h4 className="font-semibold text-foreground mb-2 text-sm">Payment Method</h4>

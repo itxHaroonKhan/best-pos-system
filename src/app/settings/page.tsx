@@ -37,12 +37,14 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-3xl font-bold tracking-tight text-primary">Settings</h1>
-        <p className="text-muted-foreground">Manage your store settings and preferences</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Settings</h1>
+          <p className="text-sm text-muted-foreground">Manage your store settings and preferences</p>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
         <Card>
           <CardHeader>
             <Store className="w-5 h-5 text-primary mb-2" />
@@ -180,8 +182,8 @@ export default function SettingsPage() {
         </Card>
       </div>
 
-      <div className="flex justify-end">
-        <Button className="gap-2" onClick={handleSaveChanges}>
+      <div className="flex flex-col sm:flex-row justify-end gap-2">
+        <Button className="gap-2 w-full sm:w-auto" onClick={handleSaveChanges}>
           <Save className="w-4 h-4" />
           Save Changes
         </Button>

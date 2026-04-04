@@ -149,59 +149,59 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Inventory</h1>
-          <p className="text-muted-foreground">Manage your products and stock levels</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Inventory</h1>
+          <p className="text-sm text-muted-foreground">Manage your products and stock levels</p>
         </div>
-        <Button onClick={() => setIsAddOpen(true)} className="gap-2">
+        <Button onClick={() => setIsAddOpen(true)} className="gap-2 w-full sm:w-auto">
           <Plus className="w-4 h-4" />
-          Add Product
+          <span>Add Product</span>
         </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Products</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Stock</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">In Stock</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-500">{stats.inStock}</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-500">{stats.inStock}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Low Stock</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{stats.lowStock}</div>
+            <div className="text-xl sm:text-2xl font-bold text-orange-500">{stats.lowStock}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Out of Stock</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stats.outOfStock}</div>
+            <div className="text-xl sm:text-2xl font-bold text-red-500">{stats.outOfStock}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -212,7 +212,7 @@ export default function InventoryPage() {
           />
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
@@ -229,8 +229,9 @@ export default function InventoryPage() {
           <CardTitle>Products ({filteredProducts.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <div className="grid grid-cols-6 gap-4 p-4 bg-muted/50 font-medium text-sm">
+          {/* Desktop Table View */}
+          <div className="hidden md:block rounded-md border">
+            <div className="grid grid-cols-7 gap-4 p-4 bg-muted/50 font-medium text-sm">
               <div className="col-span-2">Product</div>
               <div>SKU</div>
               <div>Category</div>
@@ -241,7 +242,7 @@ export default function InventoryPage() {
             </div>
             <div className="divide-y">
               {filteredProducts.map((product) => (
-                <div key={product.id} className="grid grid-cols-6 gap-4 p-4 items-center hover:bg-muted/30 transition-colors">
+                <div key={product.id} className="grid grid-cols-7 gap-4 p-4 items-center hover:bg-muted/30 transition-colors">
                   <div className="col-span-2">
                     <p className="font-medium">{product.name}</p>
                     <p className="text-xs text-muted-foreground">Min: {product.minStock}</p>
@@ -281,12 +282,70 @@ export default function InventoryPage() {
               ))}
             </div>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4">
+            {filteredProducts.map((product) => (
+              <div key={product.id} className="border rounded-lg p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="font-semibold">{product.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{product.sku}</p>
+                  </div>
+                  {getStatusBadge(product.status)}
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground text-xs">Category</p>
+                    <Badge variant="secondary">{product.category}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Price</p>
+                    <p className="font-semibold">${product.price.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-xs">Stock</p>
+                    <div className="flex items-center gap-2">
+                      <span className={`font-medium ${product.stock <= product.minStock ? 'text-red-500' : ''}`}>
+                        {product.stock}
+                      </span>
+                      {product.stock <= product.minStock && (
+                        <AlertTriangle className="w-4 h-4 text-orange-500" />
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Min: {product.minStock}</p>
+                  </div>
+                  <div className="flex items-end justify-end">
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingProduct(product)}
+                      >
+                        <Edit className="w-4 h-4" />
+                        <span className="ml-1">Edit</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteProduct(product.id, product.name)}
+                        className="text-red-500 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span className="ml-1">Delete</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
       {/* Add Product Dialog */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-h-[unset]">
           <DialogHeader>
             <DialogTitle>Add New Product</DialogTitle>
             <DialogDescription>
@@ -303,7 +362,7 @@ export default function InventoryPage() {
                 placeholder="Enter product name"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="sku">SKU</Label>
                 <Input
@@ -327,7 +386,7 @@ export default function InventoryPage() {
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="price">Price</Label>
                 <Input
@@ -357,16 +416,16 @@ export default function InventoryPage() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddProduct}>Add Product</Button>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="w-full sm:w-auto">Cancel</Button>
+            <Button onClick={handleAddProduct} className="w-full sm:w-auto">Add Product</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Product Dialog */}
       <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-h-[unset]">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
             <DialogDescription>
@@ -383,7 +442,7 @@ export default function InventoryPage() {
                   onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-sku">SKU</Label>
                   <Input
@@ -406,7 +465,7 @@ export default function InventoryPage() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="edit-price">Price</Label>
                   <Input
@@ -437,9 +496,9 @@ export default function InventoryPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancel</Button>
-            <Button onClick={handleUpdateProduct}>Update Product</Button>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditingProduct(null)} className="w-full sm:w-auto">Cancel</Button>
+            <Button onClick={handleUpdateProduct} className="w-full sm:w-auto">Update Product</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
