@@ -85,7 +85,7 @@ export default function ReportsPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalSales.toLocaleString()}</div>
+            <div className="text-2xl font-bold">Rs. {totalSales.toLocaleString()}</div>
             <p className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="mr-1 h-3 w-3" />
               +12.5% from last period
@@ -124,7 +124,7 @@ export default function ReportsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${avgOrderValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">Rs. {avgOrderValue.toFixed(2)}</div>
             <p className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="mr-1 h-3 w-3" />
               +4.3% from last period
@@ -151,7 +151,7 @@ export default function ReportsPage() {
                     style={{ height: `${(day.sales / maxSales) * 200}px` }}
                   >
                     <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg whitespace-nowrap z-10">
-                      <p className="text-xs font-bold text-primary">${day.sales.toLocaleString()}</p>
+                      <p className="text-xs font-bold text-primary">Rs. {day.sales.toLocaleString()}</p>
                       <p className="text-[10px] text-muted-foreground">{day.orders} orders</p>
                     </div>
                   </div>
@@ -196,7 +196,7 @@ export default function ReportsPage() {
                       )
                       acc.offset += cat.value / 100
                       return acc
-                    }, { elements: [] as JSX.Element[], offset: 0 }).elements}
+                    }, { elements: [] as React.ReactElement[], offset: 0 }).elements}
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center">
@@ -252,7 +252,7 @@ export default function ReportsPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-primary text-sm">${product.revenue.toLocaleString()}</p>
+                    <p className="font-bold text-primary text-sm">Rs. {product.revenue.toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -278,7 +278,7 @@ export default function ReportsPage() {
               {salesData.map((day) => (
                 <div key={day.day} className="grid grid-cols-4 gap-4 p-4 items-center hover:bg-muted/30 transition-colors">
                   <div className="font-medium">{day.day}</div>
-                  <div className="font-semibold text-primary">${day.sales.toLocaleString()}</div>
+                  <div className="font-semibold text-primary">Rs. {day.sales.toLocaleString()}</div>
                   <div><Badge variant="secondary">{day.orders}</Badge></div>
                   <div className="text-muted-foreground">{day.customers}</div>
                 </div>

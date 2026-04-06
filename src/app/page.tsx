@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const stats = [
     {
       title: "Total Revenue",
-      value: "₹45,231.89",
+      value: "Rs. 45,231.89",
       change: "+20.1%",
       trend: "up",
       icon: DollarSign,
@@ -61,13 +61,14 @@ export default function DashboardPage() {
   const maxRevenue = Math.max(...dailyRevenue.map(d => d.revenue))
 
   const chartdata = [
-    { name: "SolarCells", amount: 4890 },
-    { name: "Glass", amount: 2103 },
-    { name: "JunctionBox", amount: 2050 },
-    { name: "Adhesive", amount: 1300 },
-    { name: "BackSheet", amount: 1100 },
-    { name: "Frame", amount: 700 },
-    { name: "Encapsulant", amount: 200 },
+    { name: "Grilled Salmon Steak", amount: 375 },
+    { name: "Tofu Poke Bowl", amount: 56 },
+    { name: "Pasta with Roast Beef", amount: 0 },
+    { name: "Beef Steak", amount: 450 },
+    { name: "Shrimp Rice Bowl", amount: 210 },
+    { name: "Apple Stuffed Pancake", amount: 175 },
+    { name: "Chicken Quinoa & Herbs", amount: 264 },
+    { name: "Vegetable Shrimp", amount: 280 },
   ]
 
   return (
@@ -129,7 +130,7 @@ export default function DashboardPage() {
                       <p className="text-xs text-muted-foreground">Processed by Cashier Rahul • 5 mins ago</p>
                     </div>
                     <div className="ml-auto font-bold text-accent">
-                      +₹{(1000 + i * 500).toFixed(2)}
+                      +Rs. {(1000 + i * 500).toFixed(2)}
                     </div>
                   </div>
                 ))}
@@ -151,7 +152,7 @@ export default function DashboardPage() {
                 data={chartdata}
                 showLabel={true}
                 valueFormatter={(number: number) =>
-                  `$${Intl.NumberFormat("us").format(number).toString()}`
+                  `Rs. ${Intl.NumberFormat("us").format(number).toString()}`
                 }
               />
             </CardContent>
@@ -205,7 +206,7 @@ export default function DashboardPage() {
                           
                           {/* Tooltip */}
                           <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-card border border-border rounded-xl px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl z-10 min-w-[120px]">
-                            <p className="text-sm font-bold text-primary">₹{day.revenue.toLocaleString()}</p>
+                            <p className="text-sm font-bold text-primary">Rs. {day.revenue.toLocaleString()}</p>
                             <p className="text-[10px] text-muted-foreground">{day.orders} orders</p>
                             {isBest && (
                               <Badge className="mt-1 text-[9px] py-0 px-1.5 bg-accent text-accent-foreground">Best Day</Badge>
@@ -232,7 +233,7 @@ export default function DashboardPage() {
                   Avg Daily Revenue
                 </p>
                 <p className="text-xl font-bold text-primary">
-                  ₹{(dailyRevenue.reduce((a, b) => a + b.revenue, 0) / 7).toFixed(0)}
+                  Rs. {(dailyRevenue.reduce((a, b) => a + b.revenue, 0) / 7).toFixed(0)}
                 </p>
               </div>
               <div className="text-center">
@@ -250,7 +251,7 @@ export default function DashboardPage() {
                   Best Day
                 </p>
                 <p className="text-xl font-bold text-accent">
-                  ₹{Math.max(...dailyRevenue.map(d => d.revenue)).toLocaleString()}
+                  Rs. {Math.max(...dailyRevenue.map(d => d.revenue)).toLocaleString()}
                 </p>
               </div>
             </div>

@@ -14,17 +14,34 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light")
-  const [mounted, setMounted] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    // Check localStorage and system preference on mount
+    // Detect theme on client-side mount
     const savedTheme = localStorage.getItem("theme") as Theme | null
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+    let initialTheme: Theme = "light"
     
-    const initialTheme = savedTheme || (prefersDark ? "dark" : "light")
+    if (savedTheme) {
+      initialTheme = savedTheme
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      initialTheme = "dark"
+    }
+    
     setThemeState(initialTheme)
     document.documentElement.classList.toggle("dark", initialTheme === "dark")
-    setMounted(true)
+    setIsInitialized(true)
+
+    // Listen to system theme changes
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem("theme")) {
+        const newTheme = e.matches ? "dark" : "light"
+        setThemeState(newTheme)
+        document.documentElement.classList.toggle("dark", e.matches)
+      }
+    }
+    mediaQuery.addEventListener("change", handleChange)
+    return () => mediaQuery.removeEventListener("change", handleChange)
   }, [])
 
   const setTheme = (newTheme: Theme) => {
@@ -36,11 +53,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark"
     setTheme(newTheme)
-  }
-
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return null
   }
 
   return (

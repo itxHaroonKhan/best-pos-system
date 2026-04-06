@@ -72,8 +72,8 @@ export function AIInsights() {
             <div className="flex items-start gap-3 p-4 rounded-lg border border-primary/20 bg-primary/5">
               <Sparkles className="w-5 h-5 text-primary mt-0.5" />
               <div className="flex-1">
-                <p className="font-medium text-sm text-foreground mb-1">AI Sales Summary</p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{insight}</p>
+                <p className="font-medium text-base text-foreground mb-1.5">AI Sales Summary</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{insight}</p>
               </div>
               <Badge className="text-xs bg-primary">AI</Badge>
             </div>
@@ -91,8 +91,8 @@ export function AIInsights() {
                 <AlertCircle className="w-5 h-5 text-orange-500 mt-0.5" />
               )}
               <div className="flex-1">
-                <p className="font-medium text-sm text-foreground">{item.title}</p>
-                <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                <p className="font-medium text-base text-foreground">{item.title}</p>
+                <p className="text-sm text-muted-foreground mt-1.5">{item.description}</p>
               </div>
               <Badge variant={item.type === "positive" ? "default" : "secondary"} className="text-xs">
                 {item.type === "positive" ? "Good" : "Alert"}

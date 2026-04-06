@@ -1,6 +1,7 @@
 "use client"
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
+import * as React from "react"
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import { cn } from "@/lib/utils"
 
 interface DonutChartData {
@@ -29,15 +30,16 @@ const COLORS = [
   "#3A86FF",
 ]
 
-export function DonutChart({ 
-  data, 
-  className, 
+export function DonutChart({
+  data,
+  className,
   category = "name",
   value = "amount",
   showLabel = true,
-  valueFormatter 
+  valueFormatter
 }: DonutChartProps) {
   const total = data.reduce((sum, item) => sum + (item[value] || item.amount), 0)
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null)
 
   const chartData = data.map((item) => ({
     name: item[category] || item.name,
@@ -48,6 +50,9 @@ export function DonutChart({
     ...item,
     percentage: ((item.amount / total) * 100).toFixed(1),
   }))
+
+  const activeItem = activeIndex !== null ? chartData[activeIndex] : null
+  const activePercentage = activeItem ? ((activeItem.amount / total) * 100).toFixed(1) : null
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -68,6 +73,8 @@ export function DonutChart({
               paddingAngle={3}
               startAngle={90}
               endAngle={-270}
+              onMouseEnter={(_, index) => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
             >
               {chartData.map((_, index) => (
                 <Cell
@@ -77,27 +84,20 @@ export function DonutChart({
                 />
               ))}
             </Pie>
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload as { name: string; amount: number }
-                  const percentage = ((data.amount / total) * 100).toFixed(1)
-                  return (
-                    <div className="bg-white dark:bg-card border border-border rounded-lg px-4 py-3 shadow-xl">
-                      <p className="text-sm font-semibold mb-1">{data.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {valueFormatter ? valueFormatter(data.amount) : data.amount.toLocaleString()}
-                      </p>
-                      <p className="text-xs font-medium text-primary mt-1">{percentage}%</p>
-                    </div>
-                  )
-                }
-                return null
-              }}
-            />
           </PieChart>
         </ResponsiveContainer>
-        
+
+        {/* Tooltip - Outside Chart */}
+        {activeItem && activePercentage && (
+          <div className="absolute top-0 right-0 bg-white dark:bg-card border border-border rounded-lg px-4 py-3 shadow-xl z-10 min-w-[140px]">
+            <p className="text-sm font-semibold mb-1">{activeItem.name}</p>
+            <p className="text-xs text-muted-foreground">
+              {valueFormatter ? valueFormatter(activeItem.amount) : activeItem.amount.toLocaleString()}
+            </p>
+            <p className="text-xs font-medium text-primary mt-1">{activePercentage}%</p>
+          </div>
+        )}
+
         {/* Center Label */}
         {showLabel && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -107,24 +107,6 @@ export function DonutChart({
             <p className="text-sm text-muted-foreground mt-1">Total</p>
           </div>
         )}
-      </div>
-
-      {/* Legend */}
-      <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
-        {percentageData.map((item, index) => (
-          <div key={item.name} className="flex items-center gap-2 group cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors">
-            <div
-              className="w-3 h-3 rounded-full flex-shrink-0 ring-2 ring-transparent group-hover:ring-primary/20 transition-all"
-              style={{ backgroundColor: COLORS[index % COLORS.length] }}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium truncate">{item.name}</p>
-              <p className="text-[10px] text-muted-foreground">
-                {valueFormatter ? valueFormatter(item.amount) : item.amount.toLocaleString()} • {item.percentage}%
-              </p>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   )

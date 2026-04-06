@@ -132,6 +132,12 @@ export default function POSPage() {
       return
     }
 
+    // Agar quantity 1 hai aur minus click kiya, toh item remove karo
+    if (cartItem.quantity === 1 && delta === -1) {
+      removeFromCart(id)
+      return
+    }
+
     setCart(prev => prev.map(item => {
       if (item.id === id) {
         const newQty = Math.max(1, item.quantity + delta)
@@ -141,18 +147,13 @@ export default function POSPage() {
     }))
     setCartItems(prev => {
       const current = prev[id] || 0
-      const newValue = current + delta
-      if (newValue <= 0) {
-        const { [id]: _, ...rest } = prev
-        return rest
-      }
-      return { ...prev, [id]: newValue }
+      return { ...prev, [id]: current + delta }
     })
 
     // Stock update karo
     setMenuItems(prev => prev.map(m => {
       if (m.id === parseInt(id)) {
-        return delta > 0 
+        return delta > 0
           ? { ...m, stock: m.stock - 1 }  // Add more = stock -1
           : { ...m, stock: m.stock + 1 }  // Remove = stock +1
       }
@@ -333,13 +334,12 @@ export default function POSPage() {
                     return (
                       <div
                         key={product.id}
-                        onClick={() => !isOutOfStock && addToCart(product)}
                         className={`group relative flex flex-col text-left p-3 rounded-xl border-2 transition-all duration-300 overflow-hidden ${
                           isOutOfStock
                             ? 'opacity-60 border-border cursor-not-allowed'
                             : quantity > 0
-                              ? 'border-primary bg-primary/10 cursor-pointer'
-                              : 'border-border hover:border-primary bg-card cursor-pointer'
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border hover:border-primary bg-card'
                         }`}
                       >
                         <div className="relative h-36 mb-3 rounded-lg overflow-hidden bg-muted">
@@ -363,7 +363,7 @@ export default function POSPage() {
                         </div>
                         <div className="flex items-center justify-between mt-auto">
                           <div>
-                            <span className="text-primary font-bold text-base">${product.price}.00</span>
+                            <span className="text-primary font-bold text-base">Rs. {product.price}.00</span>
                             <p className={`text-[10px] font-semibold ${
                               isOutOfStock ? 'text-red-500' : product.stock <= 5 ? 'text-orange-500' : 'text-green-600'
                             }`}>
@@ -373,7 +373,10 @@ export default function POSPage() {
                           {!isOutOfStock && (
                             <>
                               {quantity === 0 ? (
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 flex items-center justify-center transition-all shadow-md">
+                                <div
+                                  onClick={(e) => { e.stopPropagation(); addToCart(product) }}
+                                  className="w-7 h-7 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 flex items-center justify-center transition-all shadow-md cursor-pointer"
+                                >
                                   <Plus className="w-3.5 h-3.5 text-white" />
                                 </div>
                               ) : (
@@ -449,7 +452,7 @@ export default function POSPage() {
                         <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-primary">${(item.price * item.quantity).toFixed(2)}</span>
+                        <span className="font-bold text-primary">Rs. {(item.price * item.quantity).toFixed(2)}</span>
                         <button
                           onClick={() => removeFromCart(item.id)}
                           className="w-6 h-6 rounded-full hover:bg-destructive/20 flex items-center justify-center transition-colors"
@@ -469,21 +472,21 @@ export default function POSPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
-                  <span className="font-medium text-foreground">${subtotal.toFixed(2)}</span>
+                  <span className="font-medium text-foreground">Rs. {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tax</span>
-                  <span className="font-medium text-foreground">${tax.toFixed(2)}</span>
+                  <span className="font-medium text-foreground">Rs. {tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Donation</span>
-                  <span className="font-medium text-primary">${donation.toFixed(2)}</span>
+                  <span className="font-medium text-primary">Rs. {donation.toFixed(2)}</span>
                 </div>
               </div>
               <Separator className="my-3" />
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-foreground">Total Payable</span>
-                <span className="text-xl font-bold text-primary">${total.toFixed(2)}</span>
+                <span className="text-xl font-bold text-primary">Rs. {total.toFixed(2)}</span>
               </div>
             </div>
           </CardContent>

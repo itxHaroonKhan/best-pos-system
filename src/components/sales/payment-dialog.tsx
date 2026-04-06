@@ -118,7 +118,7 @@ export function PaymentDialog({
                   <span className="text-foreground">
                     {item.name} x {item.quantity}
                   </span>
-                  <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-medium">Rs. {(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
@@ -129,22 +129,22 @@ export function PaymentDialog({
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
+                <span className="font-medium">Rs. {subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax</span>
-                <span className="font-medium">${tax.toFixed(2)}</span>
+                <span className="font-medium">Rs. {tax.toFixed(2)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Discount</span>
-                  <span>-${discount.toFixed(2)}</span>
+                  <span>-Rs. {discount.toFixed(2)}</span>
                 </div>
               )}
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span className="text-foreground">Total</span>
-                <span className="text-primary">${total.toFixed(2)}</span>
+                <span className="text-primary">Rs. {total.toFixed(2)}</span>
               </div>
             </div>
 
@@ -195,7 +195,7 @@ export function PaymentDialog({
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Change:</span>
                     <span className={`font-bold ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      ${change.toFixed(2)}
+                      Rs. {change.toFixed(2)}
                     </span>
                   </div>
                 )}
@@ -223,7 +223,7 @@ export function PaymentDialog({
                     Processing...
                   </span>
                 ) : (
-                  `Pay $${total.toFixed(2)}`
+                  `Pay Rs. ${total.toFixed(2)}`
                 )}
               </Button>
             </DialogFooter>

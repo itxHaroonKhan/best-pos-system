@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Plus, Edit, Trash2, AlertTriangle, Package, TrendingUp, TrendingDown } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertTriangle, Package, TrendingUp, TrendingDown, PackagePlus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,6 +55,8 @@ export default function InventoryPage() {
   const [selectedCategory, setSelectedCategory] = React.useState("All")
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [editingProduct, setEditingProduct] = React.useState<Product | null>(null)
+  const [restockingProduct, setRestockingProduct] = React.useState<Product | null>(null)
+  const [restockQuantity, setRestockQuantity] = React.useState(0)
   const [newProduct, setNewProduct] = React.useState<Partial<Product>>({
     name: "",
     category: "Lunch",
@@ -134,6 +136,37 @@ export default function InventoryPage() {
       variant: "destructive",
     })
   }
+
+  const handleRestockProduct = () => {
+    if (!restockingProduct || restockQuantity <= 0) {
+      toast({
+        title: "Invalid quantity",
+        description: "Please enter a valid quantity to restock.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    const updatedProduct = {
+      ...restockingProduct,
+      stock: restockingProduct.stock + restockQuantity,
+      status: restockingProduct.stock + restockQuantity <= restockingProduct.minStock ? "low-stock" as const : "in-stock" as const,
+    }
+
+    setProducts(prev => prev.map(p =>
+      p.id === restockingProduct.id ? updatedProduct : p
+    ))
+
+    toast({
+      title: "Product restocked",
+      description: `${restockQuantity} units of ${restockingProduct.name} have been added to stock.`,
+    })
+
+    setRestockingProduct(null)
+    setRestockQuantity(0)
+  }
+
+  const quickRestockAmounts = [10, 25, 50, 100]
 
   const getStatusBadge = (status: Product["status"]) => {
     switch (status) {
@@ -249,7 +282,7 @@ export default function InventoryPage() {
                   </div>
                   <div className="text-sm font-mono">{product.sku}</div>
                   <div><Badge variant="secondary">{product.category}</Badge></div>
-                  <div className="font-semibold">${product.price.toFixed(2)}</div>
+                  <div className="font-semibold">Rs. {product.price.toFixed(2)}</div>
                   <div>
                     <div className="flex items-center gap-2">
                       <span className={`font-medium ${product.stock <= product.minStock ? 'text-red-500' : ''}`}>
@@ -262,13 +295,28 @@ export default function InventoryPage() {
                   </div>
                   <div>{getStatusBadge(product.status)}</div>
                   <div className="col-span-2 flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingProduct(product)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    {product.status === "out-of-stock" ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          setRestockingProduct(product)
+                          setRestockQuantity(10)
+                        }}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <PackagePlus className="w-4 h-4" />
+                        <span className="ml-1">Restock</span>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingProduct(product)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -301,7 +349,7 @@ export default function InventoryPage() {
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Price</p>
-                    <p className="font-semibold">${product.price.toFixed(2)}</p>
+                    <p className="font-semibold">Rs. {product.price.toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground text-xs">Stock</p>
@@ -317,14 +365,29 @@ export default function InventoryPage() {
                   </div>
                   <div className="flex items-end justify-end">
                     <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditingProduct(product)}
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span className="ml-1">Edit</span>
-                      </Button>
+                      {product.status === "out-of-stock" ? (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => {
+                            setRestockingProduct(product)
+                            setRestockQuantity(10)
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <PackagePlus className="w-4 h-4" />
+                          <span className="ml-1">Restock</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingProduct(product)}
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span className="ml-1">Edit</span>
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -499,6 +562,97 @@ export default function InventoryPage() {
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setEditingProduct(null)} className="w-full sm:w-auto">Cancel</Button>
             <Button onClick={handleUpdateProduct} className="w-full sm:w-auto">Update Product</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restock Dialog */}
+      <Dialog open={!!restockingProduct} onOpenChange={() => {
+        setRestockingProduct(null)
+        setRestockQuantity(0)
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PackagePlus className="w-5 h-5 text-green-600" />
+              Restock Product
+            </DialogTitle>
+            <DialogDescription>
+              Add stock for <span className="font-semibold">{restockingProduct?.name}</span>
+            </DialogDescription>
+          </DialogHeader>
+          {restockingProduct && (
+            <div className="space-y-4">
+              {/* Current Stock Info */}
+              <div className="p-4 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Current Stock</span>
+                  <span className="text-2xl font-bold text-red-600">{restockingProduct.stock}</span>
+                </div>
+              </div>
+
+              {/* Quick Restock Buttons */}
+              <div className="space-y-2">
+                <Label>Quick Restock Amounts</Label>
+                <div className="grid grid-cols-4 gap-2">
+                  {quickRestockAmounts.map(amount => (
+                    <Button
+                      key={amount}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRestockQuantity(amount)}
+                      className={restockQuantity === amount ? "border-green-600 bg-green-50 dark:bg-green-950" : ""}
+                    >
+                      {amount}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Quantity Input */}
+              <div className="grid gap-2">
+                <Label htmlFor="restock-quantity">Or Enter Custom Quantity</Label>
+                <Input
+                  id="restock-quantity"
+                  type="number"
+                  value={restockQuantity}
+                  onChange={(e) => setRestockQuantity(parseInt(e.target.value) || 0)}
+                  placeholder="Enter quantity"
+                  className="text-lg"
+                />
+              </div>
+
+              {/* New Stock Preview */}
+              {restockQuantity > 0 && (
+                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">New Stock Will Be</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      {restockingProduct.stock + restockQuantity}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRestockingProduct(null)
+                setRestockQuantity(0)
+              }}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRestockProduct}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700"
+            >
+              <PackagePlus className="w-4 h-4 mr-2" />
+              Confirm Restock
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

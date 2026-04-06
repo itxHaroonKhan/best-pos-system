@@ -113,15 +113,12 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Default Currency</label>
-              <Select defaultValue="inr">
+              <Select defaultValue="pkr">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="inr">INR (₹)</SelectItem>
-                  <SelectItem value="usd">USD ($)</SelectItem>
-                  <SelectItem value="eur">EUR (€)</SelectItem>
-                  <SelectItem value="gbp">GBP (£)</SelectItem>
+                  <SelectItem value="pkr">PKR (Rs.)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
