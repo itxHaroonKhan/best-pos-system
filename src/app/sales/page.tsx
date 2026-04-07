@@ -244,8 +244,8 @@ export default function POSPage() {
                 {/* Crown Icon matching Software Elites style */}
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-6 h-6">
                   <path d="M3 18L5 6L9 12L12 4L15 12L19 6L21 18H3Z" fill="currentColor"/>
-                  <path d="M9 14L7.5 16L9 18" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M15 14L16.5 16L15 18" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9 14L7.5 16L9 18" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M15 14L16.5 16L15 18" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
               <div>

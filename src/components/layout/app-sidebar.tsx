@@ -75,14 +75,14 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="h-16 flex items-center px-4">
+      <SidebarHeader className="h-16 flex items-center justify-center border-b">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
-            <Store className="w-5 h-5 text-accent-foreground" />
+          <div className="w-auto h-8 rounded flex items-center justify-center overflow-hidden">
+            <img src="/Logoo.jpeg" alt="Software Elites Logo" className="w-full h-full object-cover" />
           </div>
-          <span className="font-headline font-bold text-xl group-data-[collapsible=icon]:hidden">
-          software Elites
-          </span>
+          {/* <span className="font-headline font-bold text-xl group-data-[collapsible=icon]:hidden">
+            Software Elites
+          </span> */}
         </div>
       </SidebarHeader>
       <SidebarContent>
