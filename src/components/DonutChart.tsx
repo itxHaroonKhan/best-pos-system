@@ -40,6 +40,7 @@ export function DonutChart({
 }: DonutChartProps) {
   const total = data.reduce((sum, item) => sum + (item[value] || item.amount), 0)
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null)
+  const chartRef = React.useRef<HTMLDivElement>(null)
 
   const chartData = data.map((item) => ({
     name: item[category] || item.name,
@@ -54,10 +55,35 @@ export function DonutChart({
   const activeItem = activeIndex !== null ? chartData[activeIndex] : null
   const activePercentage = activeItem ? ((activeItem.amount / total) * 100).toFixed(1) : null
 
+  // Calculate tooltip position based on segment angle
+  const getTooltipPosition = () => {
+    if (activeIndex === null) return { x: '50%', y: '100%' }
+    
+    // Each segment angle (in degrees)
+    const segmentAngle = (360 / chartData.length) * activeIndex
+    // Start from 90 degrees (top) and go clockwise
+    const angle = (90 - segmentAngle) * (Math.PI / 180)
+    
+    // Calculate position on the outer edge of the donut
+    const outerRadius = 110
+    const padding = 40 // Additional padding outside the donut
+    const containerSize = 280 // height of the container
+    const centerX = containerSize / 2
+    const centerY = containerSize / 2
+    
+    // Position outside the donut
+    const x = centerX + (outerRadius + padding) * Math.cos(angle)
+    const y = centerY - (outerRadius + padding) * Math.sin(angle)
+    
+    return { x: `${x}px`, y: `${y}px` }
+  }
+
+  const tooltipPos = getTooltipPosition()
+
   return (
     <div className={cn("space-y-4", className)}>
       {/* Donut Chart */}
-      <div className="relative">
+      <div className="relative" ref={chartRef}>
         <ResponsiveContainer width="100%" height={280}>
           <PieChart>
             <Pie
@@ -87,9 +113,16 @@ export function DonutChart({
           </PieChart>
         </ResponsiveContainer>
 
-        {/* Tooltip - Outside Chart */}
+        {/* Tooltip - Positioned Below Active Segment */}
         {activeItem && activePercentage && (
-          <div className="absolute top-0 right-0 bg-white dark:bg-card border border-border rounded-lg px-4 py-3 shadow-xl z-10 min-w-[140px]">
+          <div 
+            className="absolute bg-white dark:bg-card border border-border rounded-lg px-4 py-3 shadow-xl z-10 min-w-[140px] pointer-events-none transition-all duration-150 ease-out"
+            style={{
+              left: tooltipPos.x,
+              top: tooltipPos.y,
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
             <p className="text-sm font-semibold mb-1">{activeItem.name}</p>
             <p className="text-xs text-muted-foreground">
               {valueFormatter ? valueFormatter(activeItem.amount) : activeItem.amount.toLocaleString()}
