@@ -58,23 +58,24 @@ export function DonutChart({
   // Calculate tooltip position based on segment angle
   const getTooltipPosition = () => {
     if (activeIndex === null) return { x: '50%', y: '100%' }
-    
+
     // Each segment angle (in degrees)
     const segmentAngle = (360 / chartData.length) * activeIndex
     // Start from 90 degrees (top) and go clockwise
     const angle = (90 - segmentAngle) * (Math.PI / 180)
-    
+
     // Calculate position on the outer edge of the donut
     const outerRadius = 110
     const padding = 40 // Additional padding outside the donut
     const containerSize = 280 // height of the container
     const centerX = containerSize / 2
     const centerY = containerSize / 2
-    
-    // Position outside the donut
-    const x = centerX + (outerRadius + padding) * Math.cos(angle)
+
+    // Position outside the donut with extra right offset
+    const rightOffset = 50// Additional right shift
+    const x = centerX + (outerRadius + padding) * Math.cos(angle) + rightOffset
     const y = centerY - (outerRadius + padding) * Math.sin(angle)
-    
+
     return { x: `${x}px`, y: `${y}px` }
   }
 

@@ -33,6 +33,7 @@ interface PaymentDialogProps {
   discount: number
   total: number
   onComplete: () => void
+  onPaymentMethodChange?: (method: string) => void
 }
 
 export function PaymentDialog({
@@ -44,6 +45,7 @@ export function PaymentDialog({
   discount,
   total,
   onComplete,
+  onPaymentMethodChange,
 }: PaymentDialogProps) {
   const { toast } = useToast()
   const [paymentMethod, setPaymentMethod] = React.useState<"cash" | "card" | "scan">("card")
@@ -64,28 +66,38 @@ export function PaymentDialog({
     }
 
     setIsProcessing(true)
-    
+
+    // Parent ko payment method inform karo
+    const methodLabels = { cash: "Cash", card: "Card", scan: "Scan" }
+    onPaymentMethodChange?.(methodLabels[paymentMethod])
+
     // Simulate payment processing
     setTimeout(() => {
       setIsProcessing(false)
       setIsComplete(true)
-      
+
       toast({
         title: "Payment successful!",
         description: "Transaction completed successfully.",
       })
 
+      // onComplete() ko thoda delay do taaki UI update ho jaye
       setTimeout(() => {
-        setIsComplete(false)
-        onOpenChange(false)
+        // Pehle print dialog open karo
         onComplete()
-      }, 2000)
+        // Thoda wait karo taaki print dialog properly open ho
+        setTimeout(() => {
+          // Payment dialog close karo
+          onOpenChange(false)
+          setIsComplete(false)
+        }, 100)
+      }, 1500)
     }, 1500)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md z-[10000]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Complete Payment</span>

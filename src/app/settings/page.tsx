@@ -15,10 +15,12 @@ import {
 import { Store, Bell, CreditCard, Palette, Save } from "lucide-react"
 import { useTheme } from "@/contexts/theme-context"
 import { useToast } from "@/hooks/use-toast"
+import { useLanguage } from "@/contexts/language-context"
 
 export default function SettingsPage() {
   const { theme, toggleTheme, setTheme } = useTheme()
   const { toast } = useToast()
+  const { t, isRTL } = useLanguage()
 
   const handleSaveChanges = () => {
     toast({
@@ -36,11 +38,11 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Settings</h1>
-          <p className="text-sm text-muted-foreground">Manage your store settings and preferences</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">{t('settings.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('settings.subtitle')}</p>
         </div>
       </div>
 
@@ -48,24 +50,24 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <Store className="w-5 h-5 text-primary mb-2" />
-            <CardTitle>Store Information</CardTitle>
-            <CardDescription>Update your store details</CardDescription>
+            <CardTitle>{t('settings.storeInfo')}</CardTitle>
+            <CardDescription>{t('settings.updateStoreDetails')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Store Name</label>
+              <label className="text-sm font-medium">{t('settings.storeName')}</label>
               <Input defaultValue="Elites" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Store Address</label>
+              <label className="text-sm font-medium">{t('settings.storeAddress')}</label>
               <Input defaultValue="123 Business Street, Mumbai, India" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Contact Number</label>
+              <label className="text-sm font-medium">{t('settings.contactNumber')}</label>
               <Input defaultValue="+91 98765 43210" />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
+              <label className="text-sm font-medium">{t('settings.email')}</label>
               <Input defaultValue="contact@elites.com" type="email" />
             </div>
           </CardContent>
@@ -74,30 +76,30 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <Bell className="w-5 h-5 text-primary mb-2" />
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>Configure notification preferences</CardDescription>
+            <CardTitle>{t('settings.notifications')}</CardTitle>
+            <CardDescription>{t('settings.configureNotifications')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <label className="text-sm font-medium">Low Stock Alerts</label>
-                <p className="text-xs text-muted-foreground">Get notified when items run low</p>
+                <label className="text-sm font-medium">{t('settings.lowStockAlerts')}</label>
+                <p className="text-xs text-muted-foreground">{t('settings.lowStockDesc')}</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <label className="text-sm font-medium">Daily Sales Summary</label>
-                <p className="text-xs text-muted-foreground">Receive daily sales reports via email</p>
+                <label className="text-sm font-medium">{t('settings.dailySalesSummary')}</label>
+                <p className="text-xs text-muted-foreground">{t('settings.dailySalesDesc')}</p>
               </div>
               <Switch defaultChecked />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <label className="text-sm font-medium">New Customer Alerts</label>
-                <p className="text-xs text-muted-foreground">Get notified when new customers register</p>
+                <label className="text-sm font-medium">{t('settings.newCustomerAlerts')}</label>
+                <p className="text-xs text-muted-foreground">{t('settings.newCustomerDesc')}</p>
               </div>
               <Switch />
             </div>
@@ -107,12 +109,12 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CreditCard className="w-5 h-5 text-primary mb-2" />
-            <CardTitle>Payment Settings</CardTitle>
-            <CardDescription>Configure payment options</CardDescription>
+            <CardTitle>{t('settings.paymentSettings')}</CardTitle>
+            <CardDescription>{t('settings.configurePayment')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Default Currency</label>
+              <label className="text-sm font-medium">{t('settings.defaultCurrency')}</label>
               <Select defaultValue="pkr">
                 <SelectTrigger>
                   <SelectValue />
@@ -123,7 +125,7 @@ export default function SettingsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tax Rate (GST)</label>
+              <label className="text-sm font-medium">{t('settings.taxRate')}</label>
               <Select defaultValue="18">
                 <SelectTrigger>
                   <SelectValue />
@@ -142,27 +144,27 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <Palette className="w-5 h-5 text-primary mb-2" />
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>Customize the look and feel</CardDescription>
+            <CardTitle>{t('settings.appearance')}</CardTitle>
+            <CardDescription>{t('settings.customizeLook')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Theme</label>
+              <label className="text-sm font-medium">{t('settings.theme')}</label>
               <Select value={theme} onValueChange={handleThemeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Light</SelectItem>
-                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="light">{t('settings.light')}</SelectItem>
+                  <SelectItem value="dark">{t('settings.dark')}</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                Current theme: <span className="font-medium">{theme}</span>
+                {t('settings.currentTheme')}: <span className="font-medium">{theme}</span>
               </p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Items per page</label>
+              <label className="text-sm font-medium">{t('settings.itemsPerPage')}</label>
               <Select defaultValue="25">
                 <SelectTrigger>
                   <SelectValue />
@@ -182,7 +184,7 @@ export default function SettingsPage() {
       <div className="flex flex-col sm:flex-row justify-end gap-2">
         <Button className="gap-2 w-full sm:w-auto" onClick={handleSaveChanges}>
           <Save className="w-4 h-4" />
-          Save Changes
+          {t('settings.saveChanges')}
         </Button>
       </div>
     </div>

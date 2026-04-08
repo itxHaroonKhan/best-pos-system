@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { useLanguage } from "@/contexts/language-context"
 
 interface Customer {
   id: string
@@ -49,6 +50,7 @@ const initialCustomers: Customer[] = [
 
 export default function CustomersPage() {
   const { toast } = useToast()
+  const { t, isRTL } = useLanguage()
   const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers)
   const [searchTerm, setSearchTerm] = React.useState("")
   const [isAddOpen, setIsAddOpen] = React.useState(false)
@@ -134,16 +136,16 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Customers</h1>
-          <p className="text-sm text-muted-foreground">Manage your customer relationships</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">{t('customers.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('customers.subtitle')}</p>
         </div>
         <Button onClick={() => setIsAddOpen(true)} className="gap-2 w-full sm:w-auto">
           <Plus className="w-4 h-4" />
-          <span>Add Customer</span>
+          <span>{t('customers.addCustomer')}</span>
         </Button>
       </div>
 
@@ -151,39 +153,39 @@ export default function CustomersPage() {
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('customers.totalCustomers')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
+            <p className="text-xs text-muted-foreground">{t('customers.allTime')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Active</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('customers.active')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold text-green-500">{stats.active}</div>
-            <p className="text-xs text-muted-foreground">Active customers</p>
+            <p className="text-xs text-muted-foreground">{t('customers.activeCustomers')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Inactive</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('customers.inactive')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold text-muted-foreground">{stats.inactive}</div>
-            <p className="text-xs text-muted-foreground">No recent orders</p>
+            <p className="text-xs text-muted-foreground">{t('customers.noRecentOrders')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('customers.totalRevenue')}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">₹{stats.revenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">From all customers</p>
+            <p className="text-xs text-muted-foreground">{t('customers.fromAllCustomers')}</p>
           </CardContent>
         </Card>
       </div>
@@ -192,7 +194,7 @@ export default function CustomersPage() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search by name, email or phone..."
+          placeholder={t('customers.searchPlaceholder')}
           className="pl-10"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -232,7 +234,7 @@ export default function CustomersPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
-                <span>Joined {new Date(customer.joinedDate).toLocaleDateString()}</span>
+                <span>Joined {new Date(customer.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
               </div>
               <Separator />
               <div className="grid grid-cols-2 gap-4 pt-2">

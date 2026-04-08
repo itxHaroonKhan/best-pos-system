@@ -15,32 +15,35 @@ import {
 } from "lucide-react"
 import { AIInsights } from "@/components/dashboard/ai-insights"
 import { DonutChart } from "@/components/DonutChart"
+import { useLanguage } from "@/contexts/language-context"
 
 export default function DashboardPage() {
+  const { t, isRTL } = useLanguage()
+  
   const stats = [
     {
-      title: "Total Revenue",
+      title: t('dashboard.totalRevenue'),
       value: "Rs. 45,231.89",
       change: "+20.1%",
       trend: "up",
       icon: DollarSign,
     },
     {
-      title: "Sales Count",
+      title: t('dashboard.salesCount'),
       value: "124",
       change: "+12.5%",
       trend: "up",
       icon: ShoppingCart,
     },
     {
-      title: "Active Customers",
+      title: t('dashboard.activeCustomers'),
       value: "1,234",
       change: "+3.2%",
       trend: "up",
       icon: Users,
     },
     {
-      title: "Low Stock Items",
+      title: t('dashboard.lowStock'),
       value: "12",
       change: "-2",
       trend: "down",
@@ -67,23 +70,23 @@ export default function DashboardPage() {
     { name: "Beef Steak", amount: 450 },
     { name: "Shrimp Rice Bowl", amount: 210 },
     { name: "Apple Stuffed Pancake", amount: 175 },
-    { name: "Chicken Quinoa & Herbs", amount: 264 },
+    { name: "Chicken", amount: 264 },
     { name: "Vegetable Shrimp", amount: 280 },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-visible" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">Welcome back, Admin. Here's what's happening today.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">{t('dashboard.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('dashboard.welcome')}</p>
         </div>
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="hover:shadow-md transition-shadow">
+          <Card key={stat.title} className="hover:shadow-md transition-shadow overflow-visible">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -111,11 +114,11 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="overflow-visible">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Activity className="w-5 h-5 text-primary" />
-                Real-time Sales Feed
+                {t('dashboard.realtimeSales')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -139,11 +142,11 @@ export default function DashboardPage() {
           </Card>
         </div>
         <div>
-          <Card className="h-full">
+          <Card className="h-full overflow-visible">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                Top Categories
+                {t('dashboard.topCategories')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -161,34 +164,37 @@ export default function DashboardPage() {
       </div>
 
       {/* Daily Revenue Trends */}
-      <Card className="border-border bg-gradient-to-br from-card to-muted/30">
+      <Card className="border-border bg-gradient-to-br from-card to-muted/30 overflow-visible">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
-              Daily Revenue Trends
+              {t('dashboard.dailyRevenue')}
             </CardTitle>
-            <Badge variant="secondary" className="text-xs">This Week</Badge>
+            <Badge variant="secondary" className="text-xs">{t('dashboard.thisWeek')}</Badge>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
             {/* Chart Area */}
-            <div className="relative h-64 pt-4">
+            <div className="relative h-64 pt-4 pb-8">
               {/* Grid Lines */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                 {[4, 3, 2, 1, 0].map((i) => (
                   <div key={i} className="w-full border-border/30 border-dashed border-t" />
                 ))}
               </div>
-              
-              <div className="relative h-full flex items-end gap-3 pb-8">
+
+              <div className="relative h-full flex items-end gap-3">
                 {dailyRevenue.map((day, index) => {
-                  const height = (day.revenue / maxRevenue) * 180
+                  const height = (day.revenue / maxRevenue) * 160
                   const isBest = day.revenue === maxRevenue
-                  
+                  const isFirst = index === 0
+                  const isLast = index === dailyRevenue.length - 1
+
                   return (
-                    <div key={day.day} className="flex-1 flex flex-col items-center gap-2 group">
+                    <div key={day.day} className="flex-1 flex flex-col items-center gap-2 group relative">
+                      {/* Bar Container */}
                       <div className="relative w-full flex justify-center">
                         <div
                           className={`w-full max-w-[50px] rounded-t-xl transition-all duration-500 cursor-pointer relative overflow-hidden ${
@@ -196,25 +202,35 @@ export default function DashboardPage() {
                               ? 'bg-gradient-to-t from-primary via-primary/90 to-accent shadow-lg shadow-primary/20'
                               : 'bg-gradient-to-t from-primary/60 to-primary/80 hover:from-primary hover:to-primary/90'
                           }`}
-                          style={{ 
+                          style={{
                             height: `${height}px`,
                             animationDelay: `${index * 100}ms`
                           }}
                         >
                           {/* Shine Effect */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                          
-                          {/* Tooltip */}
-                          <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-card border border-border rounded-xl px-4 py-2.5 opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-xl z-10 min-w-[120px]">
-                            <p className="text-sm font-bold text-primary">Rs. {day.revenue.toLocaleString()}</p>
-                            <p className="text-[10px] text-muted-foreground">{day.orders} orders</p>
+                        </div>
+
+                        {/* Tooltip - Smart positioning based on position */}
+                        <div className={`absolute z-[100] opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none group-hover:pointer-events-auto ${
+                          isFirst
+                            ? 'left-1/2 translate-x-2 -top-20 md:-top-24'
+                            : isLast
+                            ? 'right-1/2 -translate-x-2 -top-20 md:-top-24'
+                            : 'left-1/2 -translate-x-1/2 -top-20 md:-top-24'
+                        }`}>
+                          <div className="bg-card border border-border rounded-xl px-3 py-2 shadow-2xl min-w-[100px] md:min-w-[120px] relative">
+                            <p className="text-xs md:text-sm font-bold text-primary">Rs. {day.revenue.toLocaleString()}</p>
+                            <p className="text-[9px] md:text-[10px] text-muted-foreground">{day.orders} orders</p>
                             {isBest && (
-                              <Badge className="mt-1 text-[9px] py-0 px-1.5 bg-accent text-accent-foreground">Best Day</Badge>
+                              <Badge className="mt-1 text-[8px] md:text-[9px] py-0 px-1.5 bg-accent text-accent-foreground">Best Day</Badge>
                             )}
                           </div>
                         </div>
                       </div>
-                      <span className={`text-xs font-semibold absolute bottom-0 transition-colors ${
+
+                      {/* Day Label */}
+                      <span className={`text-[10px] md:text-xs font-semibold transition-colors ${
                         isBest ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
                       }`}>
                         {day.day}
@@ -260,7 +276,9 @@ export default function DashboardPage() {
       </Card>
 
       {/* AI Insights */}
-      <AIInsights />
+      <div className="overflow-visible">
+        <AIInsights />
+      </div>
     </div>
   )
 }

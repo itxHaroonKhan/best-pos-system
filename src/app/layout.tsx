@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { LanguageProvider } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
 import { Menu, PanelLeft } from 'lucide-react';
 
@@ -26,7 +27,8 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ThemeProvider>
-          <SidebarProvider defaultOpen={true}>
+          <LanguageProvider>
+            <SidebarProvider defaultOpen={true}>
             <AppSidebar />
             <SidebarInset>
               <div className="flex flex-col min-h-screen">
@@ -37,12 +39,13 @@ export default function RootLayout({
                     <span className="font-semibold text-sm">Elites POS</span>
                   </div>
                 </header>
-                <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
+                <main className="flex-1 p-4 lg:p-6 overflow-y-auto overflow-x-visible">
                   {children}
                 </main>
               </div>
             </SidebarInset>
           </SidebarProvider>
+          </LanguageProvider>
           <Toaster />
         </ThemeProvider>
       </body>

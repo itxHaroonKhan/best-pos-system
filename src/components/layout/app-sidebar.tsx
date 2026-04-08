@@ -11,7 +11,8 @@ import {
   LogOut,
   ChevronRight,
   Store,
-  Menu
+  Menu,
+  Globe
 } from "lucide-react"
 
 import {
@@ -30,43 +31,46 @@ import {
 } from "@/components/ui/sidebar"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useLanguage } from "@/contexts/language-context"
 
-const items = [
-  {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "POS Terminal",
-    url: "/sales",
-    icon: ShoppingCart,
-  },
-  {
-    title: "Inventory",
-    url: "/inventory",
-    icon: Package,
-  },
-  {
-    title: "Customers",
-    url: "/customers",
-    icon: Users,
-  },
-  {
-    title: "Reports",
-    url: "/reports",
-    icon: FileBarChart,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
-]
 
 export function AppSidebar() {
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
+  const { language, setLanguage, t, isRTL } = useLanguage()
+
+  const items = [
+    {
+      title: t('nav.dashboard'),
+      url: "/",
+      icon: LayoutDashboard,
+    },
+    {
+      title: t('nav.posTerminal'),
+      url: "/sales",
+      icon: ShoppingCart,
+    },
+    {
+      title: t('nav.inventory'),
+      url: "/inventory",
+      icon: Package,
+    },
+    {
+      title: t('nav.customers'),
+      url: "/customers",
+      icon: Users,
+    },
+    {
+      title: t('nav.reports'),
+      url: "/reports",
+      icon: FileBarChart,
+    },
+    {
+      title: t('nav.settings'),
+      url: "/settings",
+      icon: Settings,
+    },
+  ]
 
   // Close sidebar on mobile when route changes
   React.useEffect(() => {
@@ -75,6 +79,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
+      
       <SidebarHeader className="h-16 flex items-center justify-center border-b">
         <div className="flex items-center gap-3">
           <div className="w-auto h-8 rounded flex items-center justify-center overflow-hidden">
@@ -111,10 +116,22 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
+          {/* Language Toggle */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => setLanguage(language === 'en' ? 'ur' : 'en')}
+              tooltip={language === 'en' ? 'اردو' : 'English'}
+              className="py-5"
+            >
+              <Globe />
+              <span>{language === 'en' ? 'اردو' : 'English'}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          {/* Sign Out */}
           <SidebarMenuItem>
             <SidebarMenuButton className="text-destructive hover:text-destructive">
               <LogOut />
-              <span>Sign Out</span>
+              <span>{t('nav.signOut')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

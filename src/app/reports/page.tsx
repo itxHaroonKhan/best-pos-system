@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useLanguage } from "@/contexts/language-context"
 import { Separator } from "@/components/ui/separator"
 
 const salesData = [
@@ -42,6 +43,7 @@ const topProducts = [
 
 export default function ReportsPage() {
   const [period, setPeriod] = React.useState("week")
+  const { t, isRTL } = useLanguage()
 
   const totalSales = salesData.reduce((sum, d) => sum + d.sales, 0)
   const totalOrders = salesData.reduce((sum, d) => sum + d.orders, 0)
@@ -51,12 +53,12 @@ export default function ReportsPage() {
   const maxSales = Math.max(...salesData.map(d => d.sales))
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Reports</h1>
-          <p className="text-sm text-muted-foreground">Sales analytics and insights</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">{t('reports.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('reports.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <Select value={period} onValueChange={setPeriod}>
@@ -64,15 +66,15 @@ export default function ReportsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="year">This Year</SelectItem>
+              <SelectItem value="today">{t('reports.today')}</SelectItem>
+              <SelectItem value="week">{t('reports.thisWeek')}</SelectItem>
+              <SelectItem value="month">{t('reports.thisMonth')}</SelectItem>
+              <SelectItem value="year">{t('reports.thisYear')}</SelectItem>
             </SelectContent>
           </Select>
           <Button variant="outline" className="gap-2 flex-shrink-0">
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">Export</span>
+            <span className="hidden sm:inline">{t('reports.export')}</span>
           </Button>
         </div>
       </div>
@@ -81,53 +83,53 @@ export default function ReportsPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('reports.totalRevenue')}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Rs. {totalSales.toLocaleString()}</div>
             <p className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="mr-1 h-3 w-3" />
-              +12.5% from last period
+              +12.5% {t('reports.fromLastPeriod')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('reports.totalOrders')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalOrders}</div>
             <p className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="mr-1 h-3 w-3" />
-              +8.2% from last period
+              +8.2% {t('reports.fromLastPeriod')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('reports.totalCustomers')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalCustomers}</div>
             <p className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="mr-1 h-3 w-3" />
-              +5.1% from last period
+              +5.1% {t('reports.fromLastPeriod')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('reports.avgOrderValue')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Rs. {avgOrderValue.toFixed(2)}</div>
             <p className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="mr-1 h-3 w-3" />
-              +4.3% from last period
+              +4.3% {t('reports.fromLastPeriod')}
             </p>
           </CardContent>
         </Card>

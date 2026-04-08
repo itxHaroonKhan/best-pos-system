@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { useLanguage } from "@/contexts/language-context"
 
 interface Product {
   id: string
@@ -50,6 +51,7 @@ const categories = ["All", "Lunch", "Salad", "Pasta", "Beef", "Rice", "Dessert",
 
 export default function InventoryPage() {
   const { toast } = useToast()
+  const { t, isRTL } = useLanguage()
   const [products, setProducts] = React.useState<Product[]>(initialProducts)
   const [searchTerm, setSearchTerm] = React.useState("")
   const [selectedCategory, setSelectedCategory] = React.useState("All")
@@ -180,16 +182,16 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">Inventory</h1>
-          <p className="text-sm text-muted-foreground">Manage your products and stock levels</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">{t('inventory.title')}</h1>
+          <p className="text-sm text-muted-foreground">{t('inventory.subtitle')}</p>
         </div>
         <Button onClick={() => setIsAddOpen(true)} className="gap-2 w-full sm:w-auto">
           <Plus className="w-4 h-4" />
-          <span>Add Product</span>
+          <span>{t('inventory.addProduct')}</span>
         </Button>
       </div>
 
@@ -197,7 +199,7 @@ export default function InventoryPage() {
       <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Products</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('inventory.totalProducts')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -206,7 +208,7 @@ export default function InventoryPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">In Stock</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('inventory.inStock')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -215,7 +217,7 @@ export default function InventoryPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Low Stock</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('inventory.lowStock')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -224,7 +226,7 @@ export default function InventoryPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Out of Stock</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t('inventory.outOfStock')}</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -238,7 +240,7 @@ export default function InventoryPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name or SKU..."
+            placeholder={t('inventory.searchPlaceholder')}
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -246,7 +248,7 @@ export default function InventoryPage() {
         </div>
         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Category" />
+            <SelectValue placeholder={t('inventory.category')} />
           </SelectTrigger>
           <SelectContent>
             {categories.map(cat => (
@@ -259,19 +261,19 @@ export default function InventoryPage() {
       {/* Products Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Products ({filteredProducts.length})</CardTitle>
+          <CardTitle>{t('inventory.totalProducts')} ({filteredProducts.length})</CardTitle>
         </CardHeader>
         <CardContent>
           {/* Desktop Table View */}
           <div className="hidden md:block rounded-md border">
             <div className="grid grid-cols-7 gap-4 p-4 bg-muted/50 font-medium text-sm">
-              <div className="col-span-2">Product</div>
-              <div>SKU</div>
-              <div>Category</div>
-              <div>Price</div>
-              <div>Stock</div>
-              <div>Status</div>
-              <div className="col-span-2">Actions</div>
+              <div className="col-span-2">{t('inventory.product')}</div>
+              <div>{t('inventory.sku')}</div>
+              <div>{t('inventory.category')}</div>
+              <div>{t('inventory.price')}</div>
+              <div>{t('inventory.stock')}</div>
+              <div>{t('inventory.status')}</div>
+              <div className="col-span-2">{t('inventory.actions')}</div>
             </div>
             <div className="divide-y">
               {filteredProducts.map((product) => (
@@ -306,7 +308,7 @@ export default function InventoryPage() {
                         className="bg-green-600 hover:bg-green-700"
                       >
                         <PackagePlus className="w-4 h-4" />
-                        <span className="ml-1">Restock</span>
+                        <span className="ml-1">{t('inventory.restock')}</span>
                       </Button>
                     ) : (
                       <Button
@@ -376,7 +378,7 @@ export default function InventoryPage() {
                           className="bg-green-600 hover:bg-green-700"
                         >
                           <PackagePlus className="w-4 h-4" />
-                          <span className="ml-1">Restock</span>
+                          <span className="ml-1">{t('inventory.restock')}</span>
                         </Button>
                       ) : (
                         <Button
@@ -385,7 +387,7 @@ export default function InventoryPage() {
                           onClick={() => setEditingProduct(product)}
                         >
                           <Edit className="w-4 h-4" />
-                          <span className="ml-1">Edit</span>
+                          <span className="ml-1">{t('inventory.edit')}</span>
                         </Button>
                       )}
                       <Button
@@ -395,7 +397,7 @@ export default function InventoryPage() {
                         className="text-red-500 hover:text-red-600"
                       >
                         <Trash2 className="w-4 h-4" />
-                        <span className="ml-1">Delete</span>
+                        <span className="ml-1">{t('inventory.delete')}</span>
                       </Button>
                     </div>
                   </div>
@@ -410,33 +412,33 @@ export default function InventoryPage() {
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-h-[unset]">
           <DialogHeader>
-            <DialogTitle>Add New Product</DialogTitle>
+            <DialogTitle>{t('inventory.addNewProduct')}</DialogTitle>
             <DialogDescription>
-              Enter the product details below.
+              {t('inventory.enterProductDetails')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Product Name</Label>
+              <Label htmlFor="name">{t('inventory.productName')}</Label>
               <Input
                 id="name"
                 value={newProduct.name}
                 onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                placeholder="Enter product name"
+                placeholder={t('inventory.enterProductName')}
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="sku">SKU</Label>
+                <Label htmlFor="sku">{t('inventory.sku')}</Label>
                 <Input
                   id="sku"
                   value={newProduct.sku}
                   onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                  placeholder="e.g., LUN-001"
+                  placeholder={t('inventory.enterSku')}
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">{t('inventory.category')}</Label>
                 <Select value={newProduct.category} onValueChange={(v) => setNewProduct({ ...newProduct, category: v })}>
                   <SelectTrigger>
                     <SelectValue />
@@ -469,7 +471,7 @@ export default function InventoryPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="minStock">Min Stock</Label>
+                <Label htmlFor="minStock">{t('inventory.minStock')}</Label>
                 <Input
                   id="minStock"
                   type="number"
@@ -480,8 +482,8 @@ export default function InventoryPage() {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="w-full sm:w-auto">Cancel</Button>
-            <Button onClick={handleAddProduct} className="w-full sm:w-auto">Add Product</Button>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="w-full sm:w-auto">{t('inventory.cancel')}</Button>
+            <Button onClick={handleAddProduct} className="w-full sm:w-auto">{t('inventory.add')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -490,9 +492,9 @@ export default function InventoryPage() {
       <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-h-[unset]">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
+            <DialogTitle>{t('inventory.editProduct')}</DialogTitle>
             <DialogDescription>
-              Update product details.
+              {t('inventory.updateProduct')}
             </DialogDescription>
           </DialogHeader>
           {editingProduct && (
@@ -560,8 +562,8 @@ export default function InventoryPage() {
             </div>
           )}
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setEditingProduct(null)} className="w-full sm:w-auto">Cancel</Button>
-            <Button onClick={handleUpdateProduct} className="w-full sm:w-auto">Update Product</Button>
+            <Button variant="outline" onClick={() => setEditingProduct(null)} className="w-full sm:w-auto">{t('inventory.cancel')}</Button>
+            <Button onClick={handleUpdateProduct} className="w-full sm:w-auto">{t('inventory.update')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -575,10 +577,10 @@ export default function InventoryPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <PackagePlus className="w-5 h-5 text-green-600" />
-              Restock Product
+              {t('inventory.restock')}
             </DialogTitle>
             <DialogDescription>
-              Add stock for <span className="font-semibold">{restockingProduct?.name}</span>
+              {t('inventory.restock')} <span className="font-semibold">{restockingProduct?.name}</span>
             </DialogDescription>
           </DialogHeader>
           {restockingProduct && (
