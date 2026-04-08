@@ -78,7 +78,7 @@ export function AppSidebar() {
       <SidebarHeader className="h-16 flex items-center justify-center border-b">
         <div className="flex items-center gap-3">
           <div className="w-auto h-8 rounded flex items-center justify-center overflow-hidden">
-            <img src="/Logoo.jpeg" alt="Software Elites Logo" className="w-full h-full object-cover" />
+            <img src="/Logoo.png" alt="Software Elites" className="w-full h-full object-cover" />
           </div>
           {/* <span className="font-headline font-bold text-xl group-data-[collapsible=icon]:hidden">
             Software Elites
