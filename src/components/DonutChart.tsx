@@ -59,22 +59,29 @@ export function DonutChart({
   const getTooltipPosition = () => {
     if (activeIndex === null) return { x: '50%', y: '100%' }
 
-    // Each segment angle (in degrees)
-    const segmentAngle = (360 / chartData.length) * activeIndex
-    // Start from 90 degrees (top) and go clockwise
-    const angle = (90 - segmentAngle) * (Math.PI / 180)
+    // Calculate cumulative angles
+    const totalAngle = 360
+    let startAngle = 0
+    for (let i = 0; i < activeIndex; i++) {
+      startAngle += (chartData[i].amount / total) * totalAngle
+    }
+    const segmentAngle = (chartData[activeIndex].amount / total) * totalAngle
+    const midAngle = startAngle + segmentAngle / 2
 
-    // Calculate position on the outer edge of the donut
-    const outerRadius = 110
-    const padding = 40 // Additional padding outside the donut
-    const containerSize = 280 // height of the container
-    const centerX = containerSize / 2
-    const centerY = containerSize / 2
+    // Convert to radians (recharts starts at 90deg/top, goes clockwise)
+    const angleRad = ((90 - midAngle) * Math.PI) / 180
 
-    // Position outside the donut with extra right offset
-    const rightOffset = 50// Additional right shift
-    const x = centerX + (outerRadius + padding) * Math.cos(angle) + rightOffset
-    const y = centerY - (outerRadius + padding) * Math.sin(angle)
+    // Get actual container dimensions
+    const container = chartRef.current
+    const width = container?.offsetWidth || 280
+    const height = container?.offsetHeight || 280
+    const centerX = width / 2
+    const centerY = height / 2
+
+    // Position just outside the outer radius (proportional)
+    const tooltipRadius = 130 * (width / 280)
+    const x = centerX + tooltipRadius * Math.cos(angleRad)
+    const y = centerY - tooltipRadius * Math.sin(angleRad)
 
     return { x: `${x}px`, y: `${y}px` }
   }
@@ -93,11 +100,11 @@ export function DonutChart({
               cy="50%"
               innerRadius={70}
               outerRadius={110}
-              strokeWidth={3}
-              stroke="#ffffff"
+              strokeWidth={0}
+              stroke="transparent"
               dataKey="amount"
               nameKey="name"
-              paddingAngle={3}
+              paddingAngle={0}
               startAngle={90}
               endAngle={-270}
               onMouseEnter={(_, index) => setActiveIndex(index)}
@@ -107,7 +114,7 @@ export function DonutChart({
                 <Cell
                   key={`cell-${index}`}
                   fill={COLORS[index % COLORS.length]}
-                  className="transition-all duration-200 hover:opacity-80 cursor-pointer hover:scale-105"
+                  className="transition-opacity duration-200 hover:opacity-80 cursor-pointer"
                 />
               ))}
             </Pie>
@@ -116,29 +123,30 @@ export function DonutChart({
 
         {/* Tooltip - Positioned Below Active Segment */}
         {activeItem && activePercentage && (
-          <div 
-            className="absolute bg-white dark:bg-card border border-border rounded-lg px-4 py-3 shadow-xl z-10 min-w-[140px] pointer-events-none transition-all duration-150 ease-out"
+          <div
+            className="absolute rounded-md px-2 py-1.5 shadow-lg z-10 min-w-[90px] pointer-events-none transition-all duration-150 ease-out border border-white/20"
             style={{
               left: tooltipPos.x,
               top: tooltipPos.y,
-              transform: 'translate(-50%, -50%)'
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: COLORS[activeIndex % COLORS.length],
             }}
           >
-            <p className="text-sm font-semibold mb-1">{activeItem.name}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-[10px] font-semibold mb-0.5 text-white">{activeItem.name}</p>
+            <p className="text-[9px] text-white/80">
               {valueFormatter ? valueFormatter(activeItem.amount) : activeItem.amount.toLocaleString()}
             </p>
-            <p className="text-xs font-medium text-primary mt-1">{activePercentage}%</p>
+            <p className="text-[9px] font-medium text-white mt-0.5">{activePercentage}%</p>
           </div>
         )}
 
         {/* Center Label */}
         {showLabel && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <p className="text-3xl font-bold text-foreground">
+            <p className="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               {valueFormatter ? valueFormatter(total) : total.toLocaleString()}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Total</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 font-medium">Total</p>
           </div>
         )}
       </div>

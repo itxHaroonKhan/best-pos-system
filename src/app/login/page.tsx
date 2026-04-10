@@ -21,18 +21,34 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    // Simulate login
     setTimeout(() => {
-      if (email && password) {
+      // Check against stored cashiers first
+      const cashiers = JSON.parse(localStorage.getItem("cashiers") || "[]")
+      const cashier = cashiers.find((c: any) => c.email === email && c.password === password)
+
+      if (cashier) {
+        localStorage.setItem("userRole", "cashier")
+        localStorage.setItem("userEmail", cashier.email)
+        localStorage.setItem("userName", cashier.name)
         toast({
           title: "Login Successful",
-          description: `Welcome back, ${email.split('@')[0]}!`,
+          description: `Welcome back, ${cashier.name}!`,
         })
-        router.push("/")
+        router.push("/dashboard")
+      } else if (email === "admin@elites.com" && password === "admin123") {
+        // Default admin credentials
+        localStorage.setItem("userRole", "admin")
+        localStorage.setItem("userEmail", email)
+        localStorage.setItem("userName", "Admin")
+        toast({
+          title: "Login Successful",
+          description: "Welcome back, Admin!",
+        })
+        router.push("/dashboard")
       } else {
         toast({
           title: "Login Failed",
-          description: "Please enter valid credentials.",
+          description: "Invalid email or password.",
           variant: "destructive",
         })
       }
@@ -134,17 +150,10 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 w-full text-xs">
-              <div className="bg-muted/50 p-3 rounded-lg text-center">
-                <p className="font-semibold text-muted-foreground">Admin</p>
-                <p className="text-[10px]">admin@elites.com</p>
-                <p className="text-[10px]">admin123</p>
-              </div>
-              <div className="bg-muted/50 p-3 rounded-lg text-center">
-                <p className="font-semibold text-muted-foreground">Cashier</p>
-                <p className="text-[10px]">cashier@elites.com</p>
-                <p className="text-[10px]">cashier123</p>
-              </div>
+            <div className="bg-muted/50 p-3 rounded-lg text-center text-sm">
+              <p className="font-semibold text-muted-foreground mb-1">Admin</p>
+              <p className="text-xs">Email: <span className="font-mono">admin@elites.com</span></p>
+              <p className="text-xs">Password: <span className="font-mono">admin123</span></p>
             </div>
           </CardFooter>
         </form>

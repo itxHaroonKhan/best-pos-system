@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Plus, Edit, Trash2, AlertTriangle, Package, TrendingUp, TrendingDown, PackagePlus } from "lucide-react"
+import { Search, Plus, Edit, Trash2, AlertTriangle, Package, TrendingUp, TrendingDown, PackagePlus, Upload, X } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,6 +34,7 @@ interface Product {
   minStock: number
   sku: string
   status: "in-stock" | "low-stock" | "out-of-stock"
+  image?: string
 }
 
 const initialProducts: Product[] = [
@@ -66,7 +67,9 @@ export default function InventoryPage() {
     stock: 0,
     minStock: 10,
     sku: "",
+    image: "",
   })
+  const [productImage, setProductImage] = React.useState<string>("")
 
   const stats = {
     total: products.length,
@@ -92,7 +95,7 @@ export default function InventoryPage() {
       return
     }
 
-    const status: Product["status"] = newProduct.stock === 0 ? "out-of-stock" : 
+    const status: Product["status"] = newProduct.stock === 0 ? "out-of-stock" :
                                        newProduct.stock! <= newProduct.minStock! ? "low-stock" : "in-stock"
 
     const product: Product = {
@@ -104,16 +107,43 @@ export default function InventoryPage() {
       minStock: newProduct.minStock || 10,
       sku: newProduct.sku!,
       status,
+      image: productImage || undefined,
     }
 
     setProducts(prev => [...prev, product])
     setIsAddOpen(false)
     setNewProduct({ name: "", category: "Lunch", price: 0, stock: 0, minStock: 10, sku: "" })
-    
+    setProductImage("")
+
     toast({
       title: "Product added",
       description: `${product.name} has been added to inventory.`,
     })
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image under 5MB.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const result = reader.result as string
+        setProductImage(result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeImage = () => {
+    setProductImage("")
   }
 
   const handleUpdateProduct = () => {
@@ -479,6 +509,40 @@ export default function InventoryPage() {
                   onChange={(e) => setNewProduct({ ...newProduct, minStock: parseInt(e.target.value) || 10 })}
                 />
               </div>
+            </div>
+            
+            {/* Product Image Upload */}
+            <div className="grid gap-2">
+              <Label>{t('inventory.productImage') || 'Product Image'}</Label>
+              {productImage ? (
+                <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-border">
+                  <img src={productImage} alt="Product" className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer">
+                  <label htmlFor="product-image" className="cursor-pointer">
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="w-8 h-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">Click to upload image</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG, WEBP up to 5MB</p>
+                    </div>
+                    <Input
+                      id="product-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
