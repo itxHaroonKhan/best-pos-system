@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { DollarSign, TrendingUp, ShoppingCart, Users, Calendar, Download, FileBarChart } from "lucide-react"
+import { DollarSign, TrendingUp, ShoppingCart, Users, Calendar, Download, FileBarChart, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,43 +14,58 @@ import {
 } from "@/components/ui/select"
 import { useLanguage } from "@/contexts/language-context"
 import { Separator } from "@/components/ui/separator"
-
-const salesData = [
-  { day: "Mon", sales: 4200, orders: 45, customers: 38 },
-  { day: "Tue", sales: 5800, orders: 62, customers: 51 },
-  { day: "Wed", sales: 4900, orders: 53, customers: 44 },
-  { day: "Thu", sales: 7200, orders: 78, customers: 65 },
-  { day: "Fri", sales: 8500, orders: 92, customers: 78 },
-  { day: "Sat", sales: 9800, orders: 105, customers: 89 },
-  { day: "Sun", sales: 6400, orders: 68, customers: 58 },
-]
-
-const categoryData = [
-  { name: "Lunch", value: 35, color: "bg-cyan-500" },
-  { name: "Salad", value: 25, color: "bg-green-500" },
-  { name: "Pasta", value: 20, color: "bg-orange-500" },
-  { name: "Dessert", value: 12, color: "bg-pink-500" },
-  { name: "Chicken", value: 8, color: "bg-purple-500" },
-]
-
-const topProducts = [
-  { name: "Grilled Salmon Steak", sold: 156, revenue: 2340 },
-  { name: "Pasta with Roast Beef", sold: 142, revenue: 1420 },
-  { name: "Apple Stuffed Pancake", sold: 98, revenue: 3430 },
-  { name: "Beef Steak", sold: 87, revenue: 2610 },
-  { name: "Shrimp Rice Bowl", sold: 165, revenue: 990 },
-]
+import api from "@/lib/api"
 
 export default function ReportsPage() {
   const [period, setPeriod] = React.useState("week")
   const { t, isRTL } = useLanguage()
+  const [salesData, setSalesData] = React.useState<any[]>([])
+  const [categoryData, setCategoryData] = React.useState<any[]>([])
+  const [taxSummary, setTaxSummary] = React.useState<any>(null)
+  const [profitLoss, setProfitLoss] = React.useState<any>(null)
+  const [loading, setLoading] = React.useState(true)
 
-  const totalSales = salesData.reduce((sum, d) => sum + d.sales, 0)
-  const totalOrders = salesData.reduce((sum, d) => sum + d.orders, 0)
-  const totalCustomers = salesData.reduce((sum, d) => sum + d.customers, 0)
-  const avgOrderValue = totalSales / totalOrders
+  React.useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true)
+        const [salesRes, categoryRes, taxRes, profitRes] = await Promise.all([
+          api.get('/reports/sales-performance'),
+          api.get('/reports/category-distribution'),
+          api.get('/reports/tax-summary'),
+          api.get('/reports/profit-loss'),
+        ])
 
-  const maxSales = Math.max(...salesData.map(d => d.sales))
+        setSalesData(salesRes.data.data || [])
+        setCategoryData(categoryRes.data.data || [])
+        setTaxSummary(taxRes.data.data || {})
+        setProfitLoss(profitRes.data.data || {})
+      } catch (err) {
+        console.error('Failed to fetch reports:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchReports()
+  }, [])
+
+  const totalSales = profitLoss?.total_revenue || salesData.reduce((sum: number, d: any) => sum + (parseFloat(d.revenue) || 0), 0)
+  const totalOrders = 0 // API doesn't return order count per day
+  const totalCustomers = 0 // Would need a separate endpoint
+  const avgOrderValue = 0 // Would need order count
+
+  const maxSales = salesData.length > 0 ? Math.max(...salesData.map((d: any) => parseFloat(d.revenue) || 0)) : 1
+
+  if (loading) {
+    return (
+      <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Loading reports...</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -88,9 +103,8 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">Rs. {totalSales.toLocaleString()}</div>
-            <p className="flex items-center text-xs text-green-600 mt-1">
-              <TrendingUp className="mr-1 h-3 w-3" />
-              +12.5% {t('reports.fromLastPeriod')}
+            <p className="flex items-center text-xs text-muted-foreground mt-1">
+              Total revenue earned
             </p>
           </CardContent>
         </Card>
@@ -100,10 +114,9 @@ export default function ReportsPage() {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalOrders}</div>
-            <p className="flex items-center text-xs text-green-600 mt-1">
-              <TrendingUp className="mr-1 h-3 w-3" />
-              +8.2% {t('reports.fromLastPeriod')}
+            <div className="text-2xl font-bold">{salesData.length}</div>
+            <p className="flex items-center text-xs text-muted-foreground mt-1">
+              Sales records found
             </p>
           </CardContent>
         </Card>
@@ -113,10 +126,9 @@ export default function ReportsPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCustomers}</div>
-            <p className="flex items-center text-xs text-green-600 mt-1">
-              <TrendingUp className="mr-1 h-3 w-3" />
-              +5.1% {t('reports.fromLastPeriod')}
+            <div className="text-2xl font-bold">{profitLoss ? parseFloat(profitLoss.profit_margin || 0).toFixed(1) : 0}%</div>
+            <p className="flex items-center text-xs text-muted-foreground mt-1">
+              Profit margin
             </p>
           </CardContent>
         </Card>
@@ -126,10 +138,9 @@ export default function ReportsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Rs. {avgOrderValue.toFixed(2)}</div>
-            <p className="flex items-center text-xs text-green-600 mt-1">
-              <TrendingUp className="mr-1 h-3 w-3" />
-              +4.3% {t('reports.fromLastPeriod')}
+            <div className="text-2xl font-bold">Rs. {profitLoss ? parseFloat(profitLoss.net_profit || 0).toLocaleString() : 0}</div>
+            <p className="flex items-center text-xs text-muted-foreground mt-1">
+              Net profit
             </p>
           </CardContent>
         </Card>
@@ -142,24 +153,26 @@ export default function ReportsPage() {
             <CardTitle>Daily Sales Breakdown</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <div className="grid grid-cols-4 gap-4 p-4 bg-muted/50 font-medium text-sm">
-                <div>Day</div>
-                <div>Sales</div>
-                <div>Orders</div>
-                <div>Customers</div>
+            {salesData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No sales data available</p>
+            ) : (
+              <div className="rounded-md border">
+                <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 font-medium text-sm">
+                  <div>Day</div>
+                  <div>Revenue</div>
+                  <div>Day</div>
+                </div>
+                <div className="divide-y">
+                  {salesData.map((day: any, idx: number) => (
+                    <div key={idx} className="grid grid-cols-3 gap-4 p-4 items-center hover:bg-muted/30 transition-colors">
+                      <div className="font-medium">{day.day || 'N/A'}</div>
+                      <div className="font-semibold text-primary">Rs. {parseFloat(day.revenue || 0).toLocaleString()}</div>
+                      <div className="text-muted-foreground">-</div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="divide-y">
-                {salesData.map((day) => (
-                  <div key={day.day} className="grid grid-cols-4 gap-4 p-4 items-center hover:bg-muted/30 transition-colors">
-                    <div className="font-medium">{day.day}</div>
-                    <div className="font-semibold text-primary">Rs. {day.sales.toLocaleString()}</div>
-                    <div><Badge variant="secondary">{day.orders}</Badge></div>
-                    <div className="text-muted-foreground">{day.customers}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -172,30 +185,37 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-end gap-2 pt-4">
-              {salesData.map((day) => (
-                <div key={day.day} className="flex-1 flex flex-col items-center gap-2 group">
-                  <div className="relative w-full flex justify-center">
-                    <div
-                      className="w-full max-w-[50px] bg-gradient-to-t from-primary/80 to-primary rounded-t-lg transition-all duration-300 group-hover:from-primary group-hover:to-secondary cursor-pointer relative"
-                      style={{ height: `${(day.sales / maxSales) * 200}px` }}
-                    >
-                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg whitespace-nowrap z-10">
-                        <p className="text-xs font-bold text-primary">Rs. {day.sales.toLocaleString()}</p>
-                        <p className="text-[10px] text-muted-foreground">{day.orders} orders</p>
+            {salesData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No sales data to display</p>
+            ) : (
+              <div className="h-64 flex items-end gap-2 pt-4">
+                {salesData.map((day: any, index: number) => {
+                  const revenue = parseFloat(day.revenue) || 0
+                  const height = (revenue / maxSales) * 200
+                  return (
+                    <div key={index} className="flex-1 flex flex-col items-center gap-2 group">
+                      <div className="relative w-full flex justify-center">
+                        <div
+                          className="w-full max-w-[50px] bg-gradient-to-t from-primary/80 to-primary rounded-t-lg transition-all duration-300 group-hover:from-primary group-hover:to-secondary cursor-pointer relative"
+                          style={{ height: `${height}px` }}
+                        >
+                          <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-card border border-border rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg whitespace-nowrap z-10">
+                            <p className="text-xs font-bold text-primary">Rs. {revenue.toLocaleString()}</p>
+                          </div>
+                        </div>
                       </div>
+                      <span className="text-xs text-muted-foreground font-medium">{day.day}</span>
                     </div>
-                  </div>
-                  <span className="text-xs text-muted-foreground font-medium">{day.day}</span>
-                </div>
-              ))}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Category Breakdown - Enhanced */}
+        {/* Category Breakdown */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -204,123 +224,108 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
-              {/* Donut Chart Visualization */}
-              <div className="flex flex-col items-center justify-center gap-4">
-                <div className="relative w-52 h-52">
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    {categoryData.reduce((acc, cat, index) => {
-                      const offset = acc.offset
-                      const circumference = 2 * Math.PI * 40
-                      const strokeDasharray = (cat.value / 100) * circumference
-                      const strokeDashoffset = -offset * circumference
-                      acc.elements.push(
-                        <circle
-                          key={cat.name}
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          fill="none"
-                          stroke={`var(--${cat.color.replace('bg-', '')})`}
-                          strokeWidth="14"
-                          strokeDasharray={`${strokeDasharray} ${circumference - strokeDasharray}`}
-                          strokeDashoffset={strokeDashoffset}
-                          className="transition-all duration-500 hover:opacity-80"
-                          strokeLinecap="round"
-                        />
-                      )
-                      acc.offset += cat.value / 100
-                      return acc
-                    }, { elements: [] as React.ReactElement[], offset: 0 }).elements}
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center bg-card/80 backdrop-blur rounded-full w-24 h-24 flex flex-col items-center justify-center shadow-inner">
-                      <p className="text-xl font-bold text-primary">{categoryData.length}</p>
-                      <p className="text-[10px] text-muted-foreground">Categories</p>
-                    </div>
-                  </div>
+            {categoryData.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No category data available</p>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Category Legend */}
+                <div className="space-y-3">
+                  {categoryData.map((cat: any, index: number) => {
+                    const colors = ['bg-cyan-500', 'bg-green-500', 'bg-orange-500', 'bg-pink-500', 'bg-purple-500']
+                    const color = colors[index % colors.length]
+                    const value = cat.total_revenue ? (parseFloat(cat.total_revenue) / totalSales) * 100 : 0
+                    return (
+                      <div key={cat.name || index} className="group p-3 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-lg ${color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
+                              <span className="text-white font-bold text-xs">{value.toFixed(0)}%</span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-sm text-foreground">{cat.name || 'Unknown'}</p>
+                              <p className="text-xs text-muted-foreground">{cat.total_items_sold || 0} items sold</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-primary text-sm">Rs. {parseFloat(cat.total_revenue || 0).toLocaleString()}</p>
+                          </div>
+                        </div>
+                        {/* Progress Bar */}
+                        <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${color} rounded-full transition-all duration-700 ease-out`}
+                            style={{ width: `${value}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
 
-                {/* Total Summary */}
-                <div className="w-full bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-4 border border-primary/10">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Total Revenue</p>
-                      <p className="text-lg font-bold text-primary">Rs. {categoryData.reduce((sum, _, i) => sum + [3500, 2500, 2000, 1200, 800][i], 0).toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Transactions</p>
-                      <p className="text-lg font-bold text-foreground">486</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Category Legend */}
-              <div className="space-y-3">
-                {categoryData.map((cat, index) => {
-                  const revenue = [3500, 2500, 2000, 1200, 800][index]
-                  const transactions = Math.round(cat.value * 4.86)
-                  return (
-                    <div key={cat.name} className="group p-3 rounded-xl border border-border/50 hover:border-primary/30 hover:bg-primary/5 transition-all duration-300 cursor-pointer">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-lg ${cat.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
-                            <span className="text-white font-bold text-xs">{cat.value}%</span>
+                {/* Summary */}
+                <div className="flex flex-col items-center justify-center gap-4">
+                  <div className="w-full bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl p-4 border border-primary/10 text-center">
+                    <p className="text-xs text-muted-foreground mb-2">Total Revenue</p>
+                    <p className="text-2xl font-bold text-primary">Rs. {totalSales.toLocaleString()}</p>
+                    {profitLoss && (
+                      <>
+                        <Separator className="my-3" />
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Total Cost</p>
+                            <p className="text-lg font-bold text-foreground">Rs. {parseFloat(profitLoss.total_cost || 0).toLocaleString()}</p>
                           </div>
                           <div>
-                            <p className="font-semibold text-sm text-foreground">{cat.name}</p>
-                            <p className="text-xs text-muted-foreground">{transactions} orders</p>
+                            <p className="text-xs text-muted-foreground">Profit</p>
+                            <p className="text-lg font-bold text-green-600">Rs. {parseFloat(profitLoss.gross_profit || 0).toLocaleString()}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-primary text-sm">Rs. {revenue.toLocaleString()}</p>
-                        </div>
-                      </div>
-                      {/* Progress Bar */}
-                      <div className="w-full h-2 bg-muted/50 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full ${cat.color} rounded-full transition-all duration-700 ease-out`}
-                          style={{ width: `${cat.value}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Top Products */}
+        {/* Tax Summary */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Top Products</CardTitle>
+            <CardTitle>Tax Summary (GST)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                      index === 0 ? 'bg-yellow-500/20 text-yellow-500' :
-                      index === 1 ? 'bg-gray-500/20 text-gray-500' :
-                      index === 2 ? 'bg-orange-500/20 text-orange-500' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm truncate">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">{product.sold} sold</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-primary text-sm">Rs. {product.revenue.toLocaleString()}</p>
+            {taxSummary ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Taxable Amount</span>
+                    <span className="text-lg font-bold text-foreground">Rs. {parseFloat(taxSummary.total_taxable_amount || 0).toLocaleString()}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">CGST</span>
+                    <span className="text-lg font-bold text-foreground">Rs. {parseFloat(taxSummary.cgst || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">SGST</span>
+                    <span className="text-lg font-bold text-foreground">Rs. {parseFloat(taxSummary.sgst || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+                <Separator />
+                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-semibold">Total Tax</span>
+                    <span className="text-xl font-bold text-primary">Rs. {parseFloat(taxSummary.total_tax || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">No tax data available</p>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -68,11 +68,7 @@ export function AppSidebar() {
   const { setOpenMobile } = useSidebar()
   const { language, setLanguage, t, isRTL } = useLanguage()
   const { toast } = useToast()
-  const [userRole, setUserRole] = React.useState<string | null>(null)
-
-  React.useEffect(() => {
-    setUserRole(localStorage.getItem("userRole") || "admin")
-  }, [])
+  const [userRole] = React.useState<string>("admin")
 
   // Create Cashier Dialog State
   const [isCashierOpen, setIsCashierOpen] = React.useState(false)
@@ -85,40 +81,14 @@ export function AppSidebar() {
     password: "",
   })
 
-  const handleCreateCashier = async (e: React.FormEvent) => {
+  const handleCreateCashier = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-
-    setTimeout(() => {
-      // Store cashier in localStorage
-      const cashiers = JSON.parse(localStorage.getItem("cashiers") || "[]")
-      cashiers.push({
-        name: cashierData.name,
-        email: cashierData.email,
-        phone: cashierData.phone,
-        password: cashierData.password,
-        role: "cashier",
-        createdAt: new Date().toISOString(),
-      })
-      localStorage.setItem("cashiers", JSON.stringify(cashiers))
-
-      toast({
-        title: "Cashier Created",
-        description: `${cashierData.name} can now login with: ${cashierData.email}`,
-      })
-      setIsCashierOpen(false)
-      setCashierData({ name: "", email: "", phone: "", password: "" })
-      setIsLoading(false)
-    }, 1000)
+    // No backend call - just close dialog
+    setIsCashierOpen(false)
+    setCashierData({ name: "", email: "", phone: "", password: "" })
   }
 
   const handleSignOut = () => {
-    localStorage.removeItem("userRole")
-    localStorage.removeItem("userEmail")
-    toast({
-      title: "Signed Out",
-      description: "You have been signed out successfully.",
-    })
     router.push("/login")
   }
 

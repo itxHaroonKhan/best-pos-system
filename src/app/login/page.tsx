@@ -7,53 +7,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const [showPassword, setShowPassword] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
-
-    setTimeout(() => {
-      // Check against stored cashiers first
-      const cashiers = JSON.parse(localStorage.getItem("cashiers") || "[]")
-      const cashier = cashiers.find((c: any) => c.email === email && c.password === password)
-
-      if (cashier) {
-        localStorage.setItem("userRole", "cashier")
-        localStorage.setItem("userEmail", cashier.email)
-        localStorage.setItem("userName", cashier.name)
-        toast({
-          title: "Login Successful",
-          description: `Welcome back, ${cashier.name}!`,
-        })
-        router.push("/dashboard")
-      } else if (email === "admin@elites.com" && password === "admin123") {
-        // Default admin credentials
-        localStorage.setItem("userRole", "admin")
-        localStorage.setItem("userEmail", email)
-        localStorage.setItem("userName", "Admin")
-        toast({
-          title: "Login Successful",
-          description: "Welcome back, Admin!",
-        })
-        router.push("/dashboard")
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Invalid email or password.",
-          variant: "destructive",
-        })
-      }
-      setIsLoading(false)
-    }, 1000)
+    // No authentication - just redirect to dashboard
+    router.push("/dashboard")
   }
 
   return (
@@ -70,7 +34,7 @@ export default function LoginPage() {
             </CardDescription>
           </div>
         </CardHeader>
-        
+
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -119,28 +83,20 @@ export default function LoginPage() {
                 <input type="checkbox" className="rounded" />
                 <span className="text-muted-foreground">Remember me</span>
               </label>
-              <a href="#" className="text-primary hover:underline text-sm font-medium">
-                Forgot password?
+              <a href="/signup" className="text-primary hover:underline text-sm font-medium">
+                Create Account
               </a>
             </div>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-3">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-12 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Signing in...
-                </span>
-              ) : (
-                "Sign In"
-              )}
+              Sign In
             </Button>
-            
+
             <div className="relative w-full">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t" />

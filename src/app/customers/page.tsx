@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Plus, Edit, Trash2, Mail, Phone, Calendar, DollarSign } from "lucide-react"
+import { Search, Plus, Edit, Trash2, Mail, Phone, Calendar, DollarSign, Loader2, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,12 +26,19 @@ import {
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
+import api from "@/lib/api"
+import { AxiosError } from "axios"
 
 interface Customer {
   id: string
   name: string
   email: string
   phone: string
+  address?: string
+  city?: string
+  pincode?: string
+  gst_number?: string
+  created_at?: string
   joinedDate: string
   totalOrders: number
   totalSpent: number
@@ -39,19 +46,12 @@ interface Customer {
   avatar?: string
 }
 
-const initialCustomers: Customer[] = [
-  { id: "1", name: "Rajesh Kumar", email: "rajesh@email.com", phone: "+91 9876543210", joinedDate: "2024-01-15", totalOrders: 24, totalSpent: 4500, status: "active", avatar: "https://randomuser.me/api/portraits/men/1.jpg" },
-  { id: "2", name: "Priya Sharma", email: "priya@email.com", phone: "+91 9876543211", joinedDate: "2024-02-20", totalOrders: 18, totalSpent: 3200, status: "active", avatar: "https://randomuser.me/api/portraits/women/2.jpg" },
-  { id: "3", name: "Amit Patel", email: "amit@email.com", phone: "+91 9876543212", joinedDate: "2024-03-10", totalOrders: 32, totalSpent: 6800, status: "active", avatar: "https://randomuser.me/api/portraits/men/3.jpg" },
-  { id: "4", name: "Sneha Reddy", email: "sneha@email.com", phone: "+91 9876543213", joinedDate: "2024-01-05", totalOrders: 0, totalSpent: 0, status: "inactive", avatar: "https://randomuser.me/api/portraits/women/4.jpg" },
-  { id: "5", name: "Vikram Singh", email: "vikram@email.com", phone: "+91 9876543214", joinedDate: "2024-04-12", totalOrders: 15, totalSpent: 2800, status: "active", avatar: "https://randomuser.me/api/portraits/men/5.jpg" },
-  { id: "6", name: "Ananya Das", email: "ananya@email.com", phone: "+91 9876543215", joinedDate: "2024-02-28", totalOrders: 8, totalSpent: 1500, status: "active", avatar: "https://randomuser.me/api/portraits/women/6.jpg" },
-]
-
 export default function CustomersPage() {
   const { toast } = useToast()
   const { t, isRTL } = useLanguage()
-  const [customers, setCustomers] = React.useState<Customer[]>(initialCustomers)
+  const [customers, setCustomers] = React.useState<Customer[]>([])
+  const [loading, setLoading] = React.useState(true)
+  const [error, setError] = React.useState<string | null>(null)
   const [searchTerm, setSearchTerm] = React.useState("")
   const [isAddOpen, setIsAddOpen] = React.useState(false)
   const [editingCustomer, setEditingCustomer] = React.useState<Customer | null>(null)
@@ -63,6 +63,54 @@ export default function CustomersPage() {
     totalSpent: 0,
     status: "active",
   })
+  const [submitting, setSubmitting] = React.useState(false)
+
+  // Fetch customers on mount
+  React.useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const res = await api.get("/customers")
+        let data = res.data.data || res.data.customers || res.data || []
+        
+        // Map DB response to frontend format
+        if (Array.isArray(data)) {
+          data = data.map((c: any) => ({
+            id: c.id?.toString() || String(Math.random()),
+            name: c.name || 'Unknown',
+            email: c.email || '',
+            phone: c.phone || '',
+            address: c.address || '',
+            city: c.city || '',
+            pincode: c.pincode || '',
+            gst_number: c.gst_number || '',
+            created_at: c.created_at || c.createdAt || new Date().toISOString(),
+            joinedDate: c.created_at || c.createdAt || new Date().toISOString(),
+            totalOrders: c.totalOrders || c.total_orders || 0,
+            totalSpent: c.totalSpent || c.total_spent || 0,
+            status: c.status || "active",
+            avatar: c.avatar || '',
+          }))
+        }
+        
+        setCustomers(Array.isArray(data) ? data : [])
+      } catch (err) {
+        const axiosError = err as AxiosError<{ message?: string }>
+        const message = axiosError.response?.data?.message || "Failed to load customers"
+        setError(message)
+        setCustomers([])
+        toast({
+          title: "Error",
+          description: "Failed to connect to server. Please ensure the backend is running.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCustomers()
+  }, [toast])
 
   const stats = {
     total: customers.length,
@@ -77,62 +125,183 @@ export default function CustomersPage() {
     c.phone.includes(searchTerm)
   )
 
-  const handleAddCustomer = () => {
-    if (!newCustomer.name || !newCustomer.email) {
+  const handleAddCustomer = async () => {
+    if (!newCustomer.name) {
       toast({
         title: "Missing fields",
-        description: "Please fill in required fields.",
+        description: "Customer name is required.",
         variant: "destructive",
       })
       return
     }
 
-    const customer: Customer = {
-      id: Date.now().toString(),
-      name: newCustomer.name!,
-      email: newCustomer.email!,
-      phone: newCustomer.phone || "",
-      joinedDate: new Date().toISOString().split("T")[0],
-      totalOrders: 0,
-      totalSpent: 0,
-      status: "active",
-    }
+    try {
+      setSubmitting(true)
+      const res = await api.post("/customers", {
+        name: newCustomer.name,
+        email: newCustomer.email || "",
+        phone: newCustomer.phone || "",
+        address: "",
+        city: "",
+        pincode: "",
+        gst_number: "",
+      })
+      const backendData = res.data.data
+      const newCustomerObj: Customer = {
+        id: backendData.id?.toString() || String(Date.now()),
+        name: backendData.name || newCustomer.name,
+        email: backendData.email || "",
+        phone: backendData.phone || "",
+        address: backendData.address || "",
+        city: backendData.city || "",
+        pincode: backendData.pincode || "",
+        gst_number: backendData.gst_number || "",
+        created_at: backendData.created_at || new Date().toISOString(),
+        joinedDate: backendData.created_at || new Date().toISOString(),
+        totalOrders: 0,
+        totalSpent: 0,
+        status: "active",
+      }
+      setCustomers(prev => [...prev, newCustomerObj])
+      setIsAddOpen(false)
+      setNewCustomer({ name: "", email: "", phone: "", totalOrders: 0, totalSpent: 0, status: "active" })
 
-    setCustomers(prev => [...prev, customer])
-    setIsAddOpen(false)
-    setNewCustomer({ name: "", email: "", phone: "", totalOrders: 0, totalSpent: 0, status: "active" })
-    
-    toast({
-      title: "Customer added",
-      description: `${customer.name} has been added.`,
-    })
+      toast({
+        title: "Customer added",
+        description: `${newCustomerObj.name} has been added.`,
+      })
+    } catch (err) {
+      const axiosError = err as AxiosError<{ message?: string }>
+      const message = axiosError.response?.data?.message || "Failed to add customer"
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const handleUpdateCustomer = () => {
+  const handleUpdateCustomer = async () => {
     if (!editingCustomer) return
 
-    setCustomers(prev => prev.map(c => 
-      c.id === editingCustomer.id ? editingCustomer : c
-    ))
+    try {
+      setSubmitting(true)
+      const res = await api.put(`/customers/${editingCustomer.id}`, {
+        name: editingCustomer.name,
+        email: editingCustomer.email || "",
+        phone: editingCustomer.phone || "",
+        address: editingCustomer.address || "",
+        city: editingCustomer.city || "",
+        pincode: editingCustomer.pincode || "",
+        gst_number: editingCustomer.gst_number || "",
+      })
+      const backendData = res.data.data
+      if (backendData) {
+        setCustomers(prev => prev.map(c =>
+          c.id === backendData.id.toString() ? {
+            ...c,
+            name: backendData.name,
+            email: backendData.email,
+            phone: backendData.phone,
+            address: backendData.address,
+            city: backendData.city,
+            pincode: backendData.pincode,
+            gst_number: backendData.gst_number,
+          } : c
+        ))
+      } else {
+        setCustomers(prev => prev.map(c =>
+          c.id === editingCustomer.id ? { ...editingCustomer } : c
+        ))
+      }
 
-    toast({
-      title: "Customer updated",
-      description: `${editingCustomer.name}'s details have been updated.`,
-    })
-    setEditingCustomer(null)
+      toast({
+        title: "Customer updated",
+        description: `${editingCustomer.name}'s details have been updated.`,
+      })
+      setEditingCustomer(null)
+    } catch (err) {
+      const axiosError = err as AxiosError<{ message?: string }>
+      const message = axiosError.response?.data?.message || "Failed to update customer"
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const handleDeleteCustomer = (id: string, name: string) => {
-    setCustomers(prev => prev.filter(c => c.id !== id))
-    toast({
-      title: "Customer deleted",
-      description: `${name} has been removed.`,
-      variant: "destructive",
-    })
+  const handleDeleteCustomer = async (id: string, name: string) => {
+    try {
+      await api.delete(`/customers/${id}`)
+      setCustomers(prev => prev.filter(c => c.id !== id))
+      toast({
+        title: "Customer deleted",
+        description: `${name} has been removed.`,
+        variant: "destructive",
+      })
+    } catch (err) {
+      const axiosError = err as AxiosError<{ message?: string }>
+      const message = axiosError.response?.data?.message || "Failed to delete customer"
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      })
+    }
   }
 
   const getInitials = (name: string) => {
     return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-64 bg-muted rounded animate-pulse mt-2" />
+          </div>
+          <div className="h-10 w-36 bg-muted rounded animate-pulse" />
+        </div>
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="h-4 w-24 bg-muted rounded animate-pulse mb-2" />
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="h-10 w-full bg-muted rounded animate-pulse" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 rounded-full bg-muted animate-pulse" />
+                  <div className="flex-1">
+                    <div className="h-5 w-32 bg-muted rounded animate-pulse mb-2" />
+                    <div className="h-5 w-16 bg-muted rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  <div className="h-4 w-full bg-muted rounded animate-pulse" />
+                  <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -148,6 +317,29 @@ export default function CustomersPage() {
           <span>{t('customers.addCustomer')}</span>
         </Button>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-900">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <div>
+                <p className="font-medium">Failed to load customers</p>
+                <p className="text-sm opacity-80">{error}</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-auto"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
@@ -184,7 +376,7 @@ export default function CustomersPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">₹{stats.revenue.toLocaleString()}</div>
+            <div className="text-xl sm:text-2xl font-bold">Rs. {stats.revenue.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">{t('customers.fromAllCustomers')}</p>
           </CardContent>
         </Card>
@@ -201,7 +393,32 @@ export default function CustomersPage() {
         />
       </div>
 
+      {/* Empty State */}
+      {!loading && !error && customers.length === 0 && (
+        <Card>
+          <CardContent className="pt-12 pb-12 text-center">
+            <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Mail className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-1">No customers found</h3>
+            <p className="text-muted-foreground mb-4">Get started by adding your first customer</p>
+            <Button onClick={() => setIsAddOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Add Customer
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Customers Grid */}
+      {filteredCustomers.length === 0 && customers.length > 0 && searchTerm && (
+        <Card>
+          <CardContent className="pt-12 pb-12 text-center">
+            <p className="text-muted-foreground">No customers match &ldquo;{searchTerm}&rdquo;</p>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredCustomers.map((customer) => (
           <Card key={customer.id} className="hover:shadow-lg transition-shadow">
@@ -244,7 +461,7 @@ export default function CustomersPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Total Spent</p>
-                  <p className="text-lg font-bold text-primary">₹{customer.totalSpent.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-primary">Rs. {customer.totalSpent.toLocaleString()}</p>
                 </div>
               </div>
               <div className="flex gap-2 pt-2">
@@ -312,8 +529,11 @@ export default function CustomersPage() {
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="w-full sm:w-auto">Cancel</Button>
-            <Button onClick={handleAddCustomer} className="w-full sm:w-auto">Add Customer</Button>
+            <Button variant="outline" onClick={() => setIsAddOpen(false)} className="w-full sm:w-auto" disabled={submitting}>Cancel</Button>
+            <Button onClick={handleAddCustomer} className="w-full sm:w-auto" disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Customer
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -369,8 +589,11 @@ export default function CustomersPage() {
             </div>
           )}
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setEditingCustomer(null)} className="w-full sm:w-auto">Cancel</Button>
-            <Button onClick={handleUpdateCustomer} className="w-full sm:w-auto">Update Customer</Button>
+            <Button variant="outline" onClick={() => setEditingCustomer(null)} className="w-full sm:w-auto" disabled={submitting}>Cancel</Button>
+            <Button onClick={handleUpdateCustomer} className="w-full sm:w-auto" disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update Customer
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -12,79 +12,119 @@ import {
   Package,
   TrendingUp,
   Activity,
-  Calendar
+  Calendar,
+  Loader2
 } from "lucide-react"
 import { AIInsights } from "@/components/dashboard/ai-insights"
 import { DonutChart } from "@/components/DonutChart"
 import { useLanguage } from "@/contexts/language-context"
+import api from "@/lib/api"
+
+interface DashboardStats {
+  todayRevenue: number
+  todaySales: number
+  totalCustomers: number
+  lowStock: number
+  weekRevenue: number
+  monthRevenue: number
+}
 
 export default function DashboardPage() {
   const { t, isRTL } = useLanguage()
-  const [userRole, setUserRole] = React.useState<string | null>(null)
+  const [userRole] = React.useState<string>("admin")
+  const [stats, setStats] = React.useState<DashboardStats | null>(null)
+  const [recentSales, setRecentSales] = React.useState<any[]>([])
+  const [topCategories, setTopCategories] = React.useState<any[]>([])
+  const [dailySales, setDailySales] = React.useState<any[]>([])
+  const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
-    const role = localStorage.getItem("userRole") || "admin"
-    setUserRole(role)
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [statsRes, recentRes, categoriesRes, dailyRes] = await Promise.all([
+          api.get('/dashboard/stats'),
+          api.get('/dashboard/recent-sales'),
+          api.get('/dashboard/top-categories'),
+          api.get('/reports/daily-sales'),
+        ])
+
+        setStats(statsRes.data.data)
+        setRecentSales(recentRes.data.data || [])
+        setTopCategories(categoriesRes.data.data || [])
+        setDailySales(dailyRes.data.data || [])
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
   }, [])
 
   // Don't render until client-side hydration is complete
-  if (userRole === null) {
-    return null
+  if (userRole === null || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
-  const stats = [
+  const statsData = stats || {
+    todayRevenue: 0,
+    todaySales: 0,
+    totalCustomers: 0,
+    lowStock: 0,
+    weekRevenue: 0,
+    monthRevenue: 0,
+  }
+
+  const displayStats = [
     {
       title: t('dashboard.totalRevenue'),
-      value: "Rs. 45,231.89",
-      change: "+20.1%",
-      trend: "up",
+      value: `Rs. ${statsData.todayRevenue.toLocaleString()}`,
+      change: "+0%",
+      trend: "up" as const,
       icon: DollarSign,
     },
     {
       title: t('dashboard.salesCount'),
-      value: "124",
-      change: "+12.5%",
-      trend: "up",
+      value: statsData.todaySales.toString(),
+      change: "+0%",
+      trend: "up" as const,
       icon: ShoppingCart,
     },
     {
       title: t('dashboard.activeCustomers'),
-      value: "1,234",
-      change: "+3.2%",
-      trend: "up",
+      value: statsData.totalCustomers.toString(),
+      change: "+0%",
+      trend: "up" as const,
       icon: Users,
     },
     {
       title: t('dashboard.lowStock'),
-      value: "12",
-      change: "-2",
-      trend: "down",
+      value: statsData.lowStock.toString(),
+      change: "-0",
+      trend: "down" as const,
       icon: Package,
     },
   ]
 
-  const dailyRevenue = [
-    { day: "Mon", revenue: 4200, orders: 45 },
-    { day: "Tue", revenue: 5800, orders: 62 },
-    { day: "Wed", revenue: 4900, orders: 53 },
-    { day: "Thu", revenue: 7200, orders: 78 },
-    { day: "Fri", revenue: 8500, orders: 92 },
-    { day: "Sat", revenue: 9800, orders: 105 },
-    { day: "Sun", revenue: 6400, orders: 68 },
+  const dailyRevenue = dailySales.length > 0 ? dailySales.map((d: any) => ({
+    day: new Date(d.date).toLocaleDateString('en', { weekday: 'short' }),
+    revenue: parseFloat(d.revenue) || 0,
+    orders: parseInt(d.sales_count) || 0,
+  })) : [
+    { day: "Mon", revenue: 0, orders: 0 },
   ]
 
-  const maxRevenue = Math.max(...dailyRevenue.map(d => d.revenue))
+  const maxRevenue = Math.max(...dailyRevenue.map(d => d.revenue), 1)
 
-  const chartdata = [
-    { name: "Grilled Salmon Steak", amount: 375 },
-    { name: "Tofu Poke Bowl", amount: 56 },
-    { name: "Pasta with Roast Beef", amount: 0 },
-    { name: "Beef Steak", amount: 450 },
-    { name: "Shrimp Rice Bowl", amount: 210 },
-    { name: "Apple Stuffed Pancake", amount: 175 },
-    { name: "Chicken", amount: 264 },
-    { name: "Vegetable Shrimp", amount: 280 },
-  ]
+  const chartdata = topCategories.length > 0 ? topCategories.map((cat: any) => ({
+    name: cat.category || 'Unknown',
+    amount: parseFloat(cat.total_revenue) || 0,
+  })) : []
 
   return (
     <div className="space-y-4 sm:space-y-6 overflow-visible px-3 sm:px-6" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -100,7 +140,7 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {displayStats.map((stat) => (
           <Card key={stat.title} className="hover:shadow-md transition-shadow overflow-visible">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-xs sm:text-sm font-medium">{stat.title}</CardTitle>
@@ -141,20 +181,24 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3 sm:space-y-4 max-h-[400px] lg:max-h-none overflow-y-auto lg:overflow-y-visible">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
-                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+              {recentSales.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No recent sales</p>
+              ) : (
+                recentSales.map((sale: any, i: number) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                      <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <p className="text-xs sm:text-sm font-medium leading-none truncate">Sale #{sale.id}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{sale.customer_name || 'Walk-in'} • {new Date(sale.created_at).toLocaleTimeString()}</p>
+                    </div>
+                    <div className="text-xs sm:text-base font-bold text-accent flex-shrink-0">
+                      +Rs. {parseFloat(sale.final_total || sale.final_total === 0 ? sale.final_total : 0).toFixed(2)}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-xs sm:text-sm font-medium leading-none truncate">Sale #NS-{(1024 + i).toString()}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Processed by Cashier Rahul • 5 mins ago</p>
-                  </div>
-                  <div className="text-xs sm:text-base font-bold text-accent flex-shrink-0">
-                    +Rs. {(1000 + i * 500).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

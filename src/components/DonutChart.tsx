@@ -122,7 +122,7 @@ export function DonutChart({
         </ResponsiveContainer>
 
         {/* Tooltip - Positioned Below Active Segment */}
-        {activeItem && activePercentage && (
+        {activeItem && activePercentage && activeIndex !== null && (
           <div
             className="absolute rounded-md px-2 py-1.5 shadow-lg z-10 min-w-[90px] pointer-events-none transition-all duration-150 ease-out border border-white/20"
             style={{

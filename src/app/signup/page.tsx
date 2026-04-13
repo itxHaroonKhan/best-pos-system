@@ -7,14 +7,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
-  const [isLoading, setIsLoading] = React.useState(false)
   const [formData, setFormData] = React.useState({
     name: "",
     email: "",
@@ -28,38 +25,10 @@ export default function SignupPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (formData.password !== formData.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match. Please try again.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (formData.password.length < 6) {
-      toast({
-        title: "Weak Password",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-
-    // Simulate signup
-    setTimeout(() => {
-      toast({
-        title: "Account Created",
-        description: `Welcome, ${formData.name}! Your account has been created successfully.`,
-      })
-      router.push("/login")
-      setIsLoading(false)
-    }, 1500)
+    // No authentication - just redirect to login
+    router.push("/login")
   }
 
   return (
@@ -201,19 +170,9 @@ export default function SignupPage() {
             <Button
               type="submit"
               className="w-full h-12 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
-              disabled={isLoading}
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  Creating Account...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <UserPlus className="w-5 h-5" />
-                  Create Account
-                </span>
-              )}
+              <UserPlus className="w-5 h-5 mr-2" />
+              Create Account
             </Button>
 
             <p className="text-sm text-muted-foreground text-center">

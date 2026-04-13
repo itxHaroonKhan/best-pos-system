@@ -118,6 +118,7 @@ export type TranslationKeys = {
   'inventory.productDeleted': string
   'inventory.missingFields': string
   'inventory.fillRequired': string
+  'inventory.productImage': string
 
   // Customers
   'customers.title': string
@@ -338,6 +339,7 @@ export const translations: Record<'en' | 'ur', TranslationKeys> = {
     'inventory.productDeleted': 'has been removed from inventory.',
     'inventory.missingFields': 'Missing fields',
     'inventory.fillRequired': 'Please fill in all required fields.',
+    'inventory.productImage': 'Product Image',
 
     // Customers
     'customers.title': 'Customers',
@@ -557,6 +559,7 @@ export const translations: Record<'en' | 'ur', TranslationKeys> = {
     'inventory.productDeleted': 'انوینٹری سے ہٹا دیا گیا۔',
     'inventory.missingFields': 'خانہ خالی ہے',
     'inventory.fillRequired': 'براہ کرم تمام ضروری خانے پُر کریں۔',
+    'inventory.productImage': 'پروڈکٹ کی تصویر',
 
     // Customers
     'customers.title': 'کسٹمرز',

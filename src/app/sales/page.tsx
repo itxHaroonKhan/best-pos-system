@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
-import { Search, Minus, Plus, Trash2, CreditCard, Banknote, ShoppingCart, Bell, Settings, LogOut, Edit2, Printer, QrCode, ChevronDown, ChevronUp, Globe } from "lucide-react"
+import { Search, Minus, Plus, Trash2, ShoppingCart, Bell, Settings, LogOut, Edit2, Printer, ChevronDown, ChevronUp, Globe } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
 import { PaymentDialog } from "@/components/sales/payment-dialog"
 import { ReceiptPrintDialog } from "@/components/sales/receipt-print-dialog"
+import api from "@/lib/api"
 
 interface CartItem {
   id: string
@@ -40,37 +41,16 @@ interface MenuItem {
   img: string
 }
 
-const initialMenuItems: MenuItem[] = [
-  { id: 1, name: 'Grilled Salmon Steak', category: 'Special', price: 15, stock: 40, img: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&h=250&fit=crop' },
-  { id: 2, name: 'Tofu Poke Bowl', category: 'Soups', price: 7, stock: 30, img: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=250&fit=crop' },
-  { id: 3, name: 'Pasta with Roast Beef', category: 'Special', price: 10, stock: 20, img: 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=400&h=250&fit=crop' },
-  { id: 4, name: 'Beef Steak', category: 'Special', price: 30, stock: 15, img: 'https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=400&h=250&fit=crop' },
-  { id: 5, name: 'Shrimp Rice Bowl', category: 'Soups', price: 6, stock: 35, img: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=250&fit=crop' },
-  { id: 6, name: 'Apple Stuffed Pancake', category: 'Desserts', price: 35, stock: 18, img: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=250&fit=crop' },
-  { id: 7, name: 'Chicken Quinoa & Herbs', category: 'Chickens', price: 12, stock: 22, img: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=250&fit=crop' },
-  { id: 8, name: 'Vegetable Shrimp', category: 'Soups', price: 10, stock: 0, img: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=250&fit=crop' },
-  { id: 9, name: 'Chocolate Lava Cake', category: 'Desserts', price: 8, stock: 25, img: 'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400&h=250&fit=crop' },
-  { id: 10, name: 'Tiramisu', category: 'Desserts', price: 9, stock: 20, img: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&h=250&fit=crop' },
-  { id: 11, name: 'Cheesecake', category: 'Desserts', price: 7, stock: 15, img: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&h=250&fit=crop' },
-  { id: 12, name: 'Grilled Chicken', category: 'Chickens', price: 14, stock: 30, img: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=400&h=250&fit=crop' },
-  { id: 13, name: 'Chicken Wings', category: 'Chickens', price: 11, stock: 18, img: 'https://images.unsplash.com/photo-1567620832900-627979e3e12c?w=400&h=250&fit=crop' },
-  { id: 14, name: 'Chicken Tikka', category: 'Chickens', price: 13, stock: 0, img: 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400&h=250&fit=crop' },
-  { id: 15, name: 'Tomato Soup', category: 'Soups', price: 5, stock: 40, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=250&fit=crop' },
-  { id: 16, name: 'Mushroom Soup', category: 'Soups', price: 6, stock: 28, img: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=250&fit=crop' },
-  { id: 17, name: 'Ice Cream Sundae', category: 'Desserts', price: 6, stock: 22, img: 'https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?w=400&h=250&fit=crop' },
-  { id: 18, name: 'Butter Chicken', category: 'Chickens', price: 15, stock: 20, img: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=250&fit=crop' },
-]
-
 const categories = [
-  { id: 'all', nameKey: 'category.all', count: 18, color: 'from-gray-500 to-gray-600' },
-  { id: 'special', nameKey: 'category.special', count: 3, color: 'from-yellow-500 to-orange-500' },
-  { id: 'soups', nameKey: 'category.soups', count: 5, color: 'from-blue-500 to-cyan-500' },
-  { id: 'desserts', nameKey: 'category.desserts', count: 5, color: 'from-pink-500 to-rose-500' },
-  { id: 'chickens', nameKey: 'category.chickens', count: 5, color: 'from-amber-500 to-orange-500' },
+  { id: 'all', nameKey: 'category.all', color: 'from-gray-500 to-gray-600' },
+  { id: 'special', nameKey: 'category.special', color: 'from-yellow-500 to-orange-500' },
+  { id: 'soups', nameKey: 'category.soups', color: 'from-blue-500 to-cyan-500' },
+  { id: 'desserts', nameKey: 'category.desserts', color: 'from-pink-500 to-rose-500' },
+  { id: 'chickens', nameKey: 'category.chickens', color: 'from-amber-500 to-orange-500' },
 ]
 
 const categoryMapping: Record<string, string[]> = {
-  all: ['Special', 'Soups', 'Desserts', 'Chickens'],
+  all: [],  // Will be populated from API
   special: ['Special'],
   soups: ['Soups'],
   desserts: ['Desserts'],
@@ -87,14 +67,45 @@ export default function POSPage() {
   const [isPrintDialogOpen, setIsPrintDialogOpen] = React.useState(false)
   const [selectedCategory, setSelectedCategory] = React.useState('all')
   const [cartItems, setCartItems] = React.useState<Record<string, number>>({})
-  const [menuItems, setMenuItems] = React.useState<MenuItem[]>(initialMenuItems)
+  const [menuItems, setMenuItems] = React.useState<MenuItem[]>([])
+  const [menuLoading, setMenuLoading] = React.useState(true)
   const [currentTable] = React.useState({ number: '04', order: 'F0030', people: 2 })
   const [showMobileCart, setShowMobileCart] = React.useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState<string>("Card")
   const [savedOrder, setSavedOrder] = React.useState<OrderData | null>(null)
 
+  // Fetch menu items from API
+  React.useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        setMenuLoading(true)
+        const res = await api.get('/menu')
+        const items = res.data.data.items || []
+        const menuData = items.map((item: any, index: number) => ({
+          id: item.id || index + 1,
+          name: item.name,
+          category: item.category || 'General',
+          price: parseFloat(item.price) || 0,
+          stock: parseInt(item.stock) || 0,
+          img: item.image || `https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=250&fit=crop`,
+        }))
+        setMenuItems(menuData)
+
+        // Populate 'all' category dynamically
+        const allCategories: string[] = [...new Set(items.map((item: any) => item.category).filter(Boolean)) as Set<string>]
+        categoryMapping.all = allCategories
+      } catch (err) {
+        // Fallback: use empty state
+        setMenuItems([])
+      } finally {
+        setMenuLoading(false)
+      }
+    }
+    fetchMenu()
+  }, [])
+
   const filteredProducts = menuItems.filter(p => {
-    const matchesCategory = categoryMapping[selectedCategory]?.includes(p.category) || selectedCategory === 'all'
+    const matchesCategory = selectedCategory === 'all' || categoryMapping[selectedCategory]?.includes(p.category)
     const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())
     return matchesCategory && matchesSearch
   })
@@ -445,13 +456,22 @@ export default function POSPage() {
                     }`}
                   >
                     <p className={`font-semibold text-[10px] xs:text-[11px] sm:text-sm whitespace-nowrap ${selectedCategory === cat.id ? 'text-white' : 'text-foreground'}`}>{t(cat.nameKey as any)}</p>
-                    <p className={`text-[9px] xs:text-[10px] sm:text-[11px] mt-0.5 whitespace-nowrap ${selectedCategory === cat.id ? 'text-white/80' : 'text-muted-foreground'}`}>{cat.count} items</p>
+                    <p className={`text-[9px] xs:text-[10px] sm:text-[11px] mt-0.5 whitespace-nowrap ${selectedCategory === cat.id ? 'text-white/80' : 'text-muted-foreground'}`}>{selectedCategory === 'all' ? menuItems.length : menuItems.filter(m => categoryMapping[cat.id]?.includes(m.category)).length} items</p>
                   </button>
                 ))}
               </div>
 
               {/* Menu Grid - 1 col mobile, 2 col tablet, 3-4 col desktop */}
               <ScrollArea className="flex-1 min-h-0 scrollbar-thin relative z-[1]">
+                {menuLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : menuItems.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <p>No menu items available</p>
+                  </div>
+                ) : (
                 <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 xs:gap-2.5 sm:gap-3">
                   {filteredProducts.map((product) => {
                     const quantity = cartItems[product.id.toString()] || 0
@@ -531,6 +551,7 @@ export default function POSPage() {
                     )
                   })}
                 </div>
+                )}
               </ScrollArea>
             </CardContent>
           </Card>
@@ -639,25 +660,6 @@ export default function POSPage() {
           </CardContent>
 
           <CardFooter className="flex-col bg-muted/30 p-2 xs:p-3 md:p-4 space-y-2 xs:space-y-2.5 sm:space-y-3 border-t border-border flex-shrink-0 safe-bottom">
-            {/* Payment Method */}
-            <div>
-              <h4 className="font-semibold text-foreground mb-1.5 xs:mb-2 text-xs">{t('payment.method')}</h4>
-              <div className="grid grid-cols-3 gap-1.5 xs:gap-2">
-                <Button variant="outline" className="flex flex-col items-center gap-0.5 xs:gap-1 h-auto py-2.5 xs:py-2.5 md:py-3 text-xs active:scale-95 touch-target-sm">
-                  <Banknote className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="truncate">{t('payment.cash')}</span>
-                </Button>
-                <Button className="flex flex-col items-center gap-0.5 xs:gap-1 h-auto py-2.5 xs:py-2.5 md:py-3 bg-primary hover:bg-primary/80 text-xs active:scale-95 touch-container-sm">
-                  <CreditCard className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="truncate">{t('payment.card')}</span>
-                </Button>
-                <Button variant="outline" className="flex flex-col items-center gap-0.5 xs:gap-1 h-auto py-2.5 xs:py-2.5 md:py-3 text-xs active:scale-95 touch-target-sm">
-                  <QrCode className="w-4 h-4 md:w-5 md:h-5" />
-                  <span className="truncate">{t('payment.scan')}</span>
-                </Button>
-              </div>
-            </div>
-
             {/* Action Buttons */}
             <div className="grid grid-cols-3 gap-1.5 xs:gap-2 w-full">
               <Button

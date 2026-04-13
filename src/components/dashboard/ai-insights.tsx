@@ -4,7 +4,7 @@ import * as React from "react"
 import { Sparkles, TrendingUp, AlertCircle, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { dailySalesInsightsSummary } from "@/ai/flows/daily-sales-insights-summary"
+import api from "@/lib/api"
 
 export function AIInsights() {
   const [insight, setInsight] = React.useState<string>("")
@@ -13,19 +13,13 @@ export function AIInsights() {
   React.useEffect(() => {
     const fetchInsights = async () => {
       try {
-        const result = await dailySalesInsightsSummary({
-          date: new Date().toISOString().split("T")[0],
-          totalSalesAmount: 45231.89,
-          numberOfTransactions: 124,
-          averageTransactionValue: 364.77,
-          topSellingProducts: ["Grilled Salmon Steak", "Pasta with Roast Beef", "Shrimp Rice Bowl"],
-          leastSellingProducts: ["Tofu Poke Bowl", "Apple Stuffed Pancake"],
-          totalDiscountsApplied: 500,
-          paymentMethodBreakdown: { "Cash": 15000, "Card": 25000, "UPI": 5231.89 },
-          newCustomersCount: 12,
-          repeatCustomersCount: 45,
-        })
-        setInsight(result.summary)
+        const result = await api.get('/dashboard/insights')
+        const data = result.data.data
+        if (data && data.length > 0) {
+          setInsight(data.map((d: any) => d.message).join(' '))
+        } else {
+          setInsight("System is running smoothly. No critical insights at this time.")
+        }
       } catch (error) {
         setInsight("AI insights temporarily unavailable. Please try again later.")
       } finally {

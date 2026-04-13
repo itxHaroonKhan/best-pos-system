@@ -28,25 +28,9 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider>
           <LanguageProvider>
-            <SidebarProvider defaultOpen={true}>
-            <AppSidebar />
-            <SidebarInset>
-              <div className="flex flex-col min-h-screen">
-                {/* Mobile Header with Sidebar Trigger */}
-                <header className="sticky top-0 z-50 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 h-14 lg:hidden">
-                  <div className="flex items-center gap-2">
-                    <SidebarTrigger className="md:hidden" />
-                    <span className="font-semibold text-sm">Elites POS</span>
-                  </div>
-                </header>
-                <main className="flex-1 p-4 lg:p-6 overflow-y-auto overflow-x-visible">
-                  {children}
-                </main>
-              </div>
-            </SidebarInset>
-          </SidebarProvider>
+            <Toaster />
+            {children}
           </LanguageProvider>
-          <Toaster />
         </ThemeProvider>
       </body>
     </html>
