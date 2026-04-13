@@ -7,17 +7,56 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import api from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [showPassword, setShowPassword] = React.useState(false)
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const [isLoading, setIsLoading] = React.useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    // No authentication - just redirect to dashboard
-    router.push("/dashboard")
+    setIsLoading(true)
+
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password
+      })
+
+      if (response.data.success) {
+        // Store auth data
+        localStorage.setItem('authToken', response.data.token)
+        localStorage.setItem('userRole', response.data.user.role)
+        localStorage.setItem('userId', response.data.user.id.toString())
+        localStorage.setItem('userName', response.data.user.name)
+
+        toast({
+          title: "Success!",
+          description: "Login successful!"
+        })
+        router.push("/dashboard")
+      } else {
+        toast({
+          title: "Login Failed",
+          description: response.data.message || 'Login failed',
+          variant: "destructive"
+        })
+      }
+    } catch (error: any) {
+      console.error('Login error:', error)
+      toast({
+        title: "Login Failed",
+        description: error.response?.data?.message || 'Login failed. Please try again.',
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -49,6 +88,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -65,6 +105,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
@@ -72,6 +113,7 @@ export default function LoginPage() {
                   size="icon"
                   className="absolute right-1 top-1 h-8 w-8"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
@@ -93,8 +135,9 @@ export default function LoginPage() {
             <Button
               type="submit"
               className="w-full h-12 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
+              disabled={isLoading}
             >
-              Sign In
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
 
             <div className="relative w-full">

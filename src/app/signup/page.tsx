@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import api from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 
 export default function SignupPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [showPassword, setShowPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
+  const [isLoading, setIsLoading] = React.useState(false)
   const [formData, setFormData] = React.useState({
     name: "",
     email: "",
@@ -25,10 +29,79 @@ export default function SignupPage() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    // No authentication - just redirect to login
-    router.push("/login")
+
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Validation Error",
+        description: "Passwords do not match",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Validate password length
+    if (formData.password.length < 6) {
+      toast({
+        title: "Validation Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsLoading(true)
+
+    try {
+      const token = localStorage.getItem('authToken')
+      
+      // Check if user is logged in and is admin
+      const userRole = localStorage.getItem('userRole')
+      if (!token || userRole !== 'admin') {
+        toast({
+          title: "Access Denied",
+          description: "Only admins can create new accounts",
+          variant: "destructive"
+        })
+        setIsLoading(false)
+        return
+      }
+
+      const response = await api.post('/auth/create-cashier', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      if (response.data.success) {
+        toast({
+          title: "Success!",
+          description: "Account created successfully!"
+        })
+        router.push("/login")
+      } else {
+        toast({
+          title: "Error",
+          description: response.data.message || 'Failed to create account',
+          variant: "destructive"
+        })
+      }
+    } catch (error: any) {
+      console.error('Signup error:', error)
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || 'Failed to create account. Please try again.',
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -61,6 +134,7 @@ export default function SignupPage() {
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -78,6 +152,7 @@ export default function SignupPage() {
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -94,6 +169,7 @@ export default function SignupPage() {
                   className="pl-10"
                   value={formData.phone}
                   onChange={(e) => handleChange("phone", e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -103,14 +179,14 @@ export default function SignupPage() {
               <Label htmlFor="role">Role</Label>
               <select
                 id="role"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
                 value={formData.role}
                 onChange={(e) => handleChange("role", e.target.value)}
+                disabled={isLoading}
               >
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
                 <option value="cashier">Cashier</option>
               </select>
+              <p className="text-xs text-muted-foreground">Only admins can create cashier accounts</p>
             </div>
 
             {/* Password */}
@@ -126,6 +202,7 @@ export default function SignupPage() {
                   value={formData.password}
                   onChange={(e) => handleChange("password", e.target.value)}
                   required
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
@@ -133,6 +210,7 @@ export default function SignupPage() {
                   size="icon"
                   className="absolute right-1 top-1 h-8 w-8"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
@@ -152,6 +230,7 @@ export default function SignupPage() {
                   value={formData.confirmPassword}
                   onChange={(e) => handleChange("confirmPassword", e.target.value)}
                   required
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
@@ -159,6 +238,7 @@ export default function SignupPage() {
                   size="icon"
                   className="absolute right-1 top-1 h-8 w-8"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
@@ -170,9 +250,16 @@ export default function SignupPage() {
             <Button
               type="submit"
               className="w-full h-12 text-lg bg-accent hover:bg-accent/90 text-accent-foreground"
+              disabled={isLoading}
             >
-              <UserPlus className="w-5 h-5 mr-2" />
-              Create Account
+              {isLoading ? (
+                "Creating Account..."
+              ) : (
+                <>
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Create Account
+                </>
+              )}
             </Button>
 
             <p className="text-sm text-muted-foreground text-center">

@@ -24,6 +24,8 @@ import {
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
+import api from "@/lib/api"
+import { AxiosError } from "axios"
 
 interface Product {
   id: string
@@ -41,23 +43,6 @@ interface Product {
   image?: string
 }
 
-const STORAGE_KEY = "pos_products"
-
-function loadProducts(): Product[] {
-  if (typeof window === "undefined") return []
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    return data ? JSON.parse(data) : []
-  } catch {
-    return []
-  }
-}
-
-function saveProducts(products: Product[]) {
-  if (typeof window === "undefined") return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products))
-}
-
 export default function InventoryPage() {
   const { toast } = useToast()
   const { t, isRTL } = useLanguage()
@@ -69,6 +54,7 @@ export default function InventoryPage() {
   const [editingProduct, setEditingProduct] = React.useState<Product | null>(null)
   const [restockingProduct, setRestockingProduct] = React.useState<Product | null>(null)
   const [restockQuantity, setRestockQuantity] = React.useState(0)
+  const [loading, setLoading] = React.useState(true)
   const [newProduct, setNewProduct] = React.useState<Partial<Product>>({
     name: "",
     category: "",
@@ -85,14 +71,50 @@ export default function InventoryPage() {
   const [productImage, setProductImage] = React.useState<string>("")
   const [saving, setSaving] = React.useState(false)
 
-  // Load from localStorage on mount
+  // Load from backend API on mount
   React.useEffect(() => {
-    const loaded = loadProducts()
-    setProducts(loaded)
-    // Build categories list
-    const cats = [...new Set(loaded.map(p => p.category).filter(Boolean))] as string[]
-    setCategories(["All", ...cats])
-  }, [])
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        const res = await api.get("/products")
+        const data = res.data.data || []
+        const mapped = data.map((p: any) => ({
+          id: p.id.toString(),
+          name: p.name || "",
+          category: p.category || "",
+          price: parseFloat(p.selling_price) || 0,
+          costPrice: parseFloat(p.cost_price) || 0,
+          stock: parseInt(p.stock) || 0,
+          minStock: parseInt(p.threshold) || 10,
+          sku: p.sku || "",
+          barcode: p.barcode || "",
+          description: p.description || "",
+          unitType: p.unit_type || "pcs",
+          image: p.image || "",
+          status: getStatus(parseInt(p.stock) || 0, parseInt(p.threshold) || 10),
+        }))
+        setProducts(mapped)
+        const cats = [...new Set(mapped.map((p: Product) => p.category).filter(Boolean))] as string[]
+        setCategories(["All", ...cats])
+      } catch (err) {
+        const error = err as AxiosError<{ message?: string }>
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || "Failed to load products",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProducts()
+  }, [toast])
+
+  const getStatus = (stock: number, minStock: number): Product["status"] => {
+    if (stock <= 0) return "out-of-stock"
+    if (stock <= minStock) return "low-stock"
+    return "in-stock"
+  }
 
   const stats = {
     total: products.length,
@@ -108,50 +130,57 @@ export default function InventoryPage() {
     return matchesSearch && matchesCategory
   })
 
-  const getStatus = (stock: number, minStock: number): Product["status"] => {
-    if (stock <= 0) return "out-of-stock"
-    if (stock <= minStock) return "low-stock"
-    return "in-stock"
-  }
-
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!newProduct.name) {
       toast({ title: "Missing fields", description: "Product name is required.", variant: "destructive" })
       return
     }
 
     setSaving(true)
-    const product: Product = {
-      id: Date.now().toString(),
-      name: newProduct.name || "",
-      category: newProduct.category || "",
-      price: newProduct.price || 0,
-      costPrice: newProduct.costPrice || 0,
-      stock: newProduct.stock || 0,
-      minStock: newProduct.minStock || 10,
-      sku: newProduct.sku || `SKU-${Date.now()}`,
-      barcode: newProduct.barcode || "",
-      description: newProduct.description || "",
-      unitType: newProduct.unitType || "pcs",
-      image: newProduct.image || productImage,
-      status: getStatus(newProduct.stock || 0, newProduct.minStock || 10),
+    try {
+      const res = await api.post("/products", {
+        name: newProduct.name,
+        category: newProduct.category || "",
+        sku: newProduct.sku || "",
+        barcode: newProduct.barcode || "",
+        description: newProduct.description || "",
+        selling_price: newProduct.price || 0,
+        cost_price: newProduct.costPrice || 0,
+        stock: newProduct.stock || 0,
+        threshold: newProduct.minStock || 10,
+        unit_type: newProduct.unitType || "pcs",
+      })
+      const backendProduct = res.data.data
+      const product: Product = {
+        id: backendProduct.id.toString(),
+        name: backendProduct.name,
+        category: backendProduct.category,
+        price: parseFloat(backendProduct.selling_price),
+        costPrice: parseFloat(backendProduct.cost_price),
+        stock: parseInt(backendProduct.stock),
+        minStock: parseInt(backendProduct.threshold),
+        sku: backendProduct.sku,
+        barcode: backendProduct.barcode,
+        description: backendProduct.description,
+        unitType: backendProduct.unit_type,
+        image: newProduct.image || "",
+        status: getStatus(parseInt(backendProduct.stock), parseInt(backendProduct.threshold)),
+      }
+      const updated = [...products, product]
+      setProducts(updated)
+      if (product.category && !categories.includes(product.category)) {
+        setCategories(prev => [...prev, product.category])
+      }
+      setIsAddOpen(false)
+      setNewProduct({ name: "", category: "", price: 0, costPrice: 0, stock: 0, minStock: 10, sku: "", barcode: "", description: "", unitType: "pcs", image: "" })
+      setProductImage("")
+      toast({ title: "Product added", description: `${product.name} has been added to inventory.` })
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>
+      toast({ title: "Error", description: error.response?.data?.message || "Failed to add product", variant: "destructive" })
+    } finally {
+      setSaving(false)
     }
-
-    const updated = [...products, product]
-    setProducts(updated)
-    saveProducts(updated)
-
-    // Update categories
-    if (product.category && !categories.includes(product.category)) {
-      setCategories(prev => [...prev, product.category])
-    }
-
-    setIsAddOpen(false)
-    setNewProduct({ name: "", category: "", price: 0, costPrice: 0, stock: 0, minStock: 10, sku: "", barcode: "", description: "", unitType: "pcs", image: "" })
-    setProductImage("")
-    setSaving(false)
-
-    toast({ title: "Product added", description: `${product.name} has been added to inventory.` })
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,49 +205,101 @@ export default function InventoryPage() {
     setNewProduct(prev => ({ ...prev, image: "" }))
   }
 
-  const handleUpdateProduct = () => {
+  const handleUpdateProduct = async () => {
     if (!editingProduct) return
     setSaving(true)
-
-    const updated = products.map(p =>
-      p.id === editingProduct.id
-        ? { ...editingProduct, status: getStatus(editingProduct.stock, editingProduct.minStock) }
-        : p
-    )
-    setProducts(updated)
-    saveProducts(updated)
-
-    setEditingProduct(null)
-    setSaving(false)
-    toast({ title: "Product updated", description: `${editingProduct.name} has been updated.` })
+    try {
+      const res = await api.put(`/products/${editingProduct.id}`, {
+        name: editingProduct.name,
+        category: editingProduct.category,
+        sku: editingProduct.sku,
+        barcode: editingProduct.barcode,
+        description: editingProduct.description,
+        selling_price: editingProduct.price,
+        cost_price: editingProduct.costPrice,
+        stock: editingProduct.stock,
+        threshold: editingProduct.minStock,
+        unit_type: editingProduct.unitType,
+      })
+      const backendProduct = res.data.data
+      const updated = products.map(p =>
+        p.id === backendProduct.id.toString()
+          ? {
+              ...p,
+              name: backendProduct.name,
+              category: backendProduct.category,
+              price: parseFloat(backendProduct.selling_price),
+              costPrice: parseFloat(backendProduct.cost_price),
+              stock: parseInt(backendProduct.stock),
+              minStock: parseInt(backendProduct.threshold),
+              sku: backendProduct.sku,
+              barcode: backendProduct.barcode,
+              description: backendProduct.description,
+              unitType: backendProduct.unit_type,
+              status: getStatus(parseInt(backendProduct.stock), parseInt(backendProduct.threshold)),
+            }
+          : p
+      )
+      setProducts(updated)
+      setEditingProduct(null)
+      toast({ title: "Product updated", description: `${backendProduct.name} has been updated.` })
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>
+      toast({ title: "Error", description: error.response?.data?.message || "Failed to update product", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleDeleteProduct = (id: string, name: string) => {
-    const updated = products.filter(p => p.id !== id)
-    setProducts(updated)
-    saveProducts(updated)
-    toast({ title: "Product deleted", description: `${name} has been removed from inventory.`, variant: "destructive" })
+  const handleDeleteProduct = async (id: string, name: string) => {
+    try {
+      await api.delete(`/products/${id}`)
+      const updated = products.filter(p => p.id !== id)
+      setProducts(updated)
+      toast({ title: "Product deleted", description: `${name} has been removed from inventory.`, variant: "destructive" })
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>
+      toast({ title: "Error", description: error.response?.data?.message || "Failed to delete product", variant: "destructive" })
+    }
   }
 
-  const handleRestockProduct = () => {
+  const handleRestockProduct = async () => {
     if (!restockingProduct || restockQuantity <= 0) {
       toast({ title: "Invalid quantity", description: "Please enter a valid quantity.", variant: "destructive" })
       return
     }
 
-    const updated = products.map(p => {
-      if (p.id === restockingProduct.id) {
-        const newStock = p.stock + restockQuantity
-        return { ...p, stock: newStock, status: getStatus(newStock, p.minStock) }
-      }
-      return p
-    })
-    setProducts(updated)
-    saveProducts(updated)
-
-    toast({ title: "Product restocked", description: `${restockQuantity} units of ${restockingProduct.name} added to stock.` })
-    setRestockingProduct(null)
-    setRestockQuantity(0)
+    setSaving(true)
+    try {
+      const newStock = restockingProduct.stock + restockQuantity
+      await api.put(`/products/${restockingProduct.id}`, {
+        name: restockingProduct.name,
+        category: restockingProduct.category,
+        sku: restockingProduct.sku,
+        barcode: restockingProduct.barcode,
+        description: restockingProduct.description,
+        selling_price: restockingProduct.price,
+        cost_price: restockingProduct.costPrice,
+        stock: newStock,
+        threshold: restockingProduct.minStock,
+        unit_type: restockingProduct.unitType,
+      })
+      const updated = products.map(p => {
+        if (p.id === restockingProduct.id) {
+          return { ...p, stock: newStock, status: getStatus(newStock, p.minStock) }
+        }
+        return p
+      })
+      setProducts(updated)
+      toast({ title: "Product restocked", description: `${restockQuantity} units of ${restockingProduct.name} added to stock.` })
+      setRestockingProduct(null)
+      setRestockQuantity(0)
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>
+      toast({ title: "Error", description: error.response?.data?.message || "Failed to restock product", variant: "destructive" })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const quickRestockAmounts = [10, 25, 50, 100]
@@ -229,6 +310,28 @@ export default function InventoryPage() {
       case "low-stock": return <Badge className="bg-orange-500 text-white">Low Stock</Badge>
       case "out-of-stock": return <Badge className="bg-red-500 text-white">Out of Stock</Badge>
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex flex-col gap-1">
+          <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-64 bg-muted rounded animate-pulse mt-2" />
+        </div>
+        <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <div className="h-4 w-24 bg-muted rounded animate-pulse mb-2" />
+                <div className="h-8 w-16 bg-muted rounded animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="h-10 w-full bg-muted rounded animate-pulse" />
+      </div>
+    )
   }
 
   return (

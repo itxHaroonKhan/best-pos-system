@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -12,29 +13,123 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Store, Bell, CreditCard, Palette, Save } from "lucide-react"
+import { Store, Bell, CreditCard, Palette, Save, Loader2 } from "lucide-react"
 import { useTheme } from "@/contexts/theme-context"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
+import api from "@/lib/api"
+import { AxiosError } from "axios"
+
+interface Settings {
+  store_name: string
+  store_address: string
+  store_phone: string
+  store_email: string
+  store_gstin: string
+  currency: string
+  tax_rate: number
+  items_per_page: number
+  theme: string
+  invoice_prefix: string
+  low_stock_alert: boolean
+}
 
 export default function SettingsPage() {
   const { theme, toggleTheme, setTheme } = useTheme()
   const { toast } = useToast()
   const { t, isRTL } = useLanguage()
+  const [settings, setSettings] = React.useState<Settings>({
+    store_name: '',
+    store_address: '',
+    store_phone: '',
+    store_email: '',
+    store_gstin: '',
+    currency: 'PKR',
+    tax_rate: 18,
+    items_per_page: 25,
+    theme: 'light',
+    invoice_prefix: 'INV',
+    low_stock_alert: true,
+  })
+  const [loading, setLoading] = React.useState(true)
+  const [saving, setSaving] = React.useState(false)
 
-  const handleSaveChanges = () => {
-    toast({
-      title: "Settings saved",
-      description: "Your preferences have been updated successfully.",
-    })
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get("/settings")
+        const data = res.data.data || res.data.settings || {}
+        setSettings(data)
+      } catch (err) {
+        console.error("Failed to load settings", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSettings()
+  }, [])
+
+  const handleSaveChanges = async () => {
+    setSaving(true)
+    try {
+      await api.put("/settings", settings)
+      toast({
+        title: "Settings saved",
+        description: "Your preferences have been updated successfully.",
+      })
+    } catch (err) {
+      const error = err as AxiosError<{ message?: string }>
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to save settings",
+        variant: "destructive",
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleThemeChange = (value: string) => {
     setTheme(value as "light" | "dark")
+    setSettings(prev => ({ ...prev, theme: value }))
     toast({
       title: "Theme changed",
       description: `Switched to ${value} mode.`,
     })
+  }
+
+  const updateSetting = (key: keyof Settings, value: string | number | boolean) => {
+    setSettings(prev => ({ ...prev, [key]: value }))
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex flex-col gap-1">
+          <div className="h-8 w-48 bg-muted rounded animate-pulse" />
+          <div className="h-4 w-64 bg-muted rounded animate-pulse mt-2" />
+        </div>
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="h-5 w-5 bg-muted rounded animate-pulse mb-2" />
+                <div className="h-6 w-32 bg-muted rounded animate-pulse mb-1" />
+                <div className="h-4 w-48 bg-muted rounded animate-pulse" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[...Array(4)].map((_, j) => (
+                  <div key={j} className="space-y-2">
+                    <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+                    <div className="h-10 w-full bg-muted rounded animate-pulse" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -56,19 +151,19 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.storeName')}</label>
-              <Input defaultValue="Elites" />
+              <Input value={settings.store_name} onChange={(e) => updateSetting("store_name", e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.storeAddress')}</label>
-              <Input defaultValue="123 Business Street, Mumbai, India" />
+              <Input value={settings.store_address} onChange={(e) => updateSetting("store_address", e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.contactNumber')}</label>
-              <Input defaultValue="+91 98765 43210" />
+              <Input value={settings.store_phone} onChange={(e) => updateSetting("store_phone", e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.email')}</label>
-              <Input defaultValue="contact@elites.com" type="email" />
+              <Input value={settings.store_email} onChange={(e) => updateSetting("store_email", e.target.value)} type="email" />
             </div>
           </CardContent>
         </Card>
@@ -85,7 +180,7 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">{t('settings.lowStockAlerts')}</label>
                 <p className="text-xs text-muted-foreground">{t('settings.lowStockDesc')}</p>
               </div>
-              <Switch defaultChecked />
+              <Switch checked={settings.low_stock_alert} onCheckedChange={(v) => updateSetting("low_stock_alert", v)} />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
@@ -115,18 +210,20 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.defaultCurrency')}</label>
-              <Select defaultValue="pkr">
+              <Select value={settings.currency} onValueChange={(v) => updateSetting("currency", v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pkr">PKR (Rs.)</SelectItem>
+                  <SelectItem value="PKR">PKR (Rs.)</SelectItem>
+                  <SelectItem value="USD">USD ($)</SelectItem>
+                  <SelectItem value="EUR">EUR (€)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.taxRate')}</label>
-              <Select defaultValue="18">
+              <Select value={settings.tax_rate.toString()} onValueChange={(v) => updateSetting("tax_rate", parseInt(v))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -165,7 +262,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.itemsPerPage')}</label>
-              <Select defaultValue="25">
+              <Select value={settings.items_per_page.toString()} onValueChange={(v) => updateSetting("items_per_page", parseInt(v))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -182,9 +279,9 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row justify-end gap-2">
-        <Button className="gap-2 w-full sm:w-auto" onClick={handleSaveChanges}>
-          <Save className="w-4 h-4" />
-          {t('settings.saveChanges')}
+        <Button className="gap-2 w-full sm:w-auto" onClick={handleSaveChanges} disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {saving ? "Saving..." : t('settings.saveChanges')}
         </Button>
       </div>
     </div>
