@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { AuthProvider } from '@/contexts/auth-context';
 import { LanguageProvider } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
 import { Menu, PanelLeft } from 'lucide-react';
@@ -27,12 +28,15 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <ThemeProvider>
-          <LanguageProvider>
-            <Toaster />
-            {children}
-          </LanguageProvider>
+          <AuthProvider>
+            <LanguageProvider>
+              <Toaster />
+              {children}
+            </LanguageProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+

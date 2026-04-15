@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
+import ProtectedRoute from "@/components/protected-route"
 import { PaymentDialog } from "@/components/sales/payment-dialog"
 import { ReceiptPrintDialog } from "@/components/sales/receipt-print-dialog"
 import api from "@/lib/api"
@@ -73,6 +74,8 @@ export default function POSPage() {
   const [showMobileCart, setShowMobileCart] = React.useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = React.useState<string>("Card")
   const [savedOrder, setSavedOrder] = React.useState<OrderData | null>(null)
+  const [showAddedPopup, setShowAddedPopup] = React.useState(false)
+  const [lastAddedItem, setLastAddedItem] = React.useState("")
 
   // Fetch menu items from API
   React.useEffect(() => {
@@ -136,10 +139,11 @@ export default function POSPage() {
       }
       return [...prev, { id: product.id.toString(), name: product.name, price: product.price, quantity: 1, category: product.category }]
     })
-    toast({
-      title: t('msg.addedToCart'),
-      description: `${product.name} - ${product.stock - 1} ${t('menu.left')}`,
-    })
+    
+    // Show localized popup instead of global toast
+    setLastAddedItem(product.name)
+    setShowAddedPopup(true)
+    setTimeout(() => setShowAddedPopup(false), 1000)
   }
 
   const updateQuantity = (id: string, delta: number) => {
@@ -206,6 +210,7 @@ export default function POSPage() {
       title: t('msg.removed'),
       description: `${cartItem?.name || 'Item'} - ${t('cart.empty')}`,
       variant: "destructive",
+      duration: 2000,
     })
   }
 
@@ -228,6 +233,7 @@ export default function POSPage() {
     toast({
       title: t('msg.cleared'),
       description: `${t('cart.orderedItems')} - ${t('cart.empty')}`,
+      duration: 2000,
     })
   }
 
@@ -248,41 +254,91 @@ export default function POSPage() {
     setIsPaymentOpen(true)
   }
 
-  const handlePaymentComplete = () => {
-    // Pehle cart data save karo (clear hone se pehle!)
-    const orderData: OrderData = {
-      cart: [...cart],
-      subtotal,
-      tax,
-      donation,
-      total,
-      paymentMethod: selectedPaymentMethod,
+  const handlePaymentComplete = async () => {
+    if (cart.length === 0) {
+      toast({
+        title: t('msg.cartEmpty'),
+        description: t('msg.cartEmptyDesc'),
+        variant: "destructive",
+      })
+      return
     }
-    setSavedOrder(orderData)
-    
-    // Ab cart clear karo
-    setCart([])
-    setCartItems({})
-    setDiscount(0)
-    setMenuItems(prev => prev.map(m => m.stock < 0 ? { ...m, stock: 0 } : m))
-    setShowMobileCart(false)
 
-    toast({
-      title: t('msg.paymentSuccess'),
-      description: t('msg.orderPlaced'),
-    })
+    try {
+      // Create sale items for backend
+      const saleItems = cart.map(item => ({
+        product_id: parseInt(item.id),
+        quantity: item.quantity,
+        price: item.price,
+      }))
 
-    // Thoda delay do taaki payment dialog properly close ho jaye
-    // Uske baad print dialog open karo with saved order
-    setTimeout(() => {
-      setIsPrintDialogOpen(true)
-    }, 300)
+      console.log('🛒 Sending sale request:', {
+        items: saleItems,
+        payment_method: selectedPaymentMethod,
+        amount_paid: total,
+        discount: 0,
+      })
+
+      // Call backend API to create sale
+      const response = await api.post('/sales', {
+        items: saleItems,
+        payment_method: selectedPaymentMethod,
+        amount_paid: total,
+        discount: 0,
+      })
+
+      console.log('✅ Sale response:', response.data)
+
+      if (response.data.success) {
+        // Pehle cart data save karo (clear hone se pehle!)
+        const orderData: OrderData = {
+          cart: [...cart],
+          subtotal,
+          tax,
+          donation,
+          total,
+          paymentMethod: selectedPaymentMethod,
+        }
+        setSavedOrder(orderData)
+
+        // Ab cart clear karo
+        setCart([])
+        setCartItems({})
+        setDiscount(0)
+        setShowMobileCart(false)
+
+        toast({
+          title: t('msg.paymentSuccess'),
+          description: t('msg.orderPlaced'),
+        })
+
+        // Thoda delay do taaki payment dialog properly close ho jaye
+        // Uske baad print dialog open karo with saved order
+        setTimeout(() => {
+          setIsPrintDialogOpen(true)
+        }, 300)
+      } else {
+        toast({
+          title: "Sale Failed",
+          description: response.data.message || "Failed to complete sale",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
+      console.error('Sale error:', error)
+      toast({
+        title: "Sale Failed",
+        description: error.response?.data?.message || "Failed to complete sale",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col overflow-visible max-w-[100vw]" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header - Optimized for 320px+ screens */}
-      <header className="bg-card border-b border-border px-2 xs:px-2.5 sm:px-4 md:px-6 py-2 xs:py-2.5 sm:py-3 flex-shrink-0 safe-top relative z-50">
+    <ProtectedRoute>
+      <div className="h-[100dvh] w-full flex flex-col overflow-visible max-w-[100vw]" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Header - Optimized for 320px+ screens */}
+        <header className="bg-card border-b border-border px-2 xs:px-2.5 sm:px-4 md:px-6 py-2 xs:py-2.5 sm:py-3 flex-shrink-0 safe-top relative z-50">
         <div className="flex items-center justify-between gap-1.5 xs:gap-2 max-w-full overflow-x-visible">
           {/* Logo Section */}
           <div className="flex items-center gap-1.5 xs:gap-2 flex-shrink-0 min-w-0">
@@ -433,6 +489,17 @@ export default function POSPage() {
 
           {/* Foodies Menu Section */}
           <Card className="border border-border bg-card rounded-xl xs:rounded-2xl overflow-hidden shadow-xl flex-1 flex flex-col relative z-0">
+            {/* Local Added Popup */}
+            {showAddedPopup && (
+              <div className="absolute top-20 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in zoom-in slide-in-from-top-4 duration-300">
+                <div className="bg-primary text-black px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 border-2 border-white/20 backdrop-blur-md">
+                  <div className="bg-black/20 rounded-full p-1">
+                    <Plus className="w-3 h-3 text-black" />
+                  </div>
+                  <span className="text-xs font-bold whitespace-nowrap">{t('msg.addedToCart')}: {lastAddedItem}</span>
+                </div>
+              </div>
+            )}
             <CardHeader className="pb-2 xs:pb-3 border-b border-border flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm xs:text-base sm:text-lg font-bold text-foreground flex items-center gap-1.5 xs:gap-2">
@@ -518,7 +585,7 @@ export default function POSPage() {
                               {isOutOfStock ? '❌ Out' : `✓ ${product.stock} left`}
                             </p>
                           </div>
-                          {!isOutOfStock && (
+                          {(quantity > 0 || !isOutOfStock) && (
                             <>
                               {quantity === 0 ? (
                                 <div
@@ -538,9 +605,13 @@ export default function POSPage() {
                                   <span className="w-3.5 xs:w-4 text-center text-[10px] xs:text-xs font-bold text-primary">{quantity}</span>
                                   <div
                                     onClick={(e) => { e.stopPropagation(); updateQuantity(product.id.toString(), 1) }}
-                                    className="w-6 h-6 xs:w-7 xs:h-7 rounded-full bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80 flex items-center justify-center transition-all cursor-pointer active:scale-90"
+                                    className={`w-6 h-6 xs:w-7 xs:h-7 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-90 ${
+                                      isOutOfStock 
+                                        ? 'bg-muted opacity-50 cursor-not-allowed' 
+                                        : 'bg-gradient-to-r from-primary to-secondary hover:from-primary/80 hover:to-secondary/80'
+                                    }`}
                                   >
-                                    <Plus className="w-2.5 h-2.5 xs:w-3 xs:h-3 text-white" />
+                                    <Plus className={`w-2.5 h-2.5 xs:w-3 xs:h-3 ${isOutOfStock ? 'text-muted-foreground' : 'text-white'}`} />
                                   </div>
                                 </div>
                               )}
@@ -684,5 +755,6 @@ export default function POSPage() {
         </Card>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }

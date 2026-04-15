@@ -18,6 +18,7 @@ import {
 import { AIInsights } from "@/components/dashboard/ai-insights"
 import { DonutChart } from "@/components/DonutChart"
 import { useLanguage } from "@/contexts/language-context"
+import ProtectedRoute from "@/components/protected-route"
 import api from "@/lib/api"
 
 interface DashboardStats {
@@ -31,7 +32,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   const { t, isRTL } = useLanguage()
-  const [userRole] = React.useState<string>("admin")
+  const [userRole, setUserRole] = React.useState<string | null>(null)
   const [stats, setStats] = React.useState<DashboardStats | null>(null)
   const [recentSales, setRecentSales] = React.useState<any[]>([])
   const [topCategories, setTopCategories] = React.useState<any[]>([])
@@ -39,22 +40,31 @@ export default function DashboardPage() {
   const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {
+    setUserRole(localStorage.getItem('userRole') || 'cashier')
+  }, [])
+
+  React.useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [statsRes, recentRes, categoriesRes, dailyRes] = await Promise.all([
-          api.get('/dashboard/stats'),
-          api.get('/dashboard/recent-sales'),
-          api.get('/dashboard/top-categories'),
-          api.get('/reports/daily-sales'),
-        ])
+        const token = localStorage.getItem('authToken')
+        console.log('Auth Token:', token ? 'Exists' : 'Missing')
+        console.log('User Role:', localStorage.getItem('userRole'))
+        
+        // Use the consolidated endpoint to avoid 429 errors
+        const res = await api.get('/dashboard/all')
+        const { stats: statsData, recentSales: recentData, topCategories: categoriesData, dailySales: dailyData } = res.data.data
 
-        setStats(statsRes.data.data)
-        setRecentSales(recentRes.data.data || [])
-        setTopCategories(categoriesRes.data.data || [])
-        setDailySales(dailyRes.data.data || [])
-      } catch (err) {
+        console.log('Dashboard Data:', res.data.data)
+
+        setStats(statsData)
+        setRecentSales(recentData || [])
+        setTopCategories(categoriesData || [])
+        setDailySales(dailyData || [])
+      } catch (err: any) {
         console.error('Failed to fetch dashboard data:', err)
+        console.error('Error Response:', err.response?.data)
+        console.error('Error Status:', err.response?.status)
       } finally {
         setLoading(false)
       }
@@ -127,9 +137,10 @@ export default function DashboardPage() {
   })) : []
 
   return (
-    <div className="space-y-4 sm:space-y-6 overflow-visible px-3 sm:px-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <ProtectedRoute>
+      <div className="space-y-4 sm:space-y-6 overflow-visible px-3 sm:px-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-primary">{t('dashboard.title')}</h1>
           {userRole === "admin" && (
@@ -191,10 +202,10 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex-1 min-w-0 space-y-1">
                       <p className="text-xs sm:text-sm font-medium leading-none truncate">Sale #{sale.id}</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{sale.customer_name || 'Walk-in'} • {new Date(sale.created_at).toLocaleTimeString()}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{sale.customer_name || 'Walk-in'} • {new Date(sale.sale_date).toLocaleTimeString()}</p>
                     </div>
                     <div className="text-xs sm:text-base font-bold text-accent flex-shrink-0">
-                      +Rs. {parseFloat(sale.final_total || sale.final_total === 0 ? sale.final_total : 0).toFixed(2)}
+                      +Rs. {parseFloat(sale.grand_total || sale.grand_total === 0 ? sale.grand_total : 0).toFixed(2)}
                     </div>
                   </div>
                 ))
@@ -207,7 +218,7 @@ export default function DashboardPage() {
       {/* Daily Revenue & Top Categories */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
         <div className="lg:col-span-2 min-w-0">
-          <Card className="border-border bg-gradient-to-br from-card to-muted/30 overflow-visible">
+          <Card className="border-white bg-gradient-to-br from-card to-muted/30 overflow-visible">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2 min-w-0">
@@ -280,7 +291,7 @@ export default function DashboardPage() {
                       <span>Avg Daily</span>
                     </p>
                     <p className="text-base sm:text-xl font-bold text-primary">
-                      Rs. {(dailyRevenue.reduce((a, b) => a + b.revenue, 0) / 7).toFixed(0)}
+                      Rs. {(dailyRevenue.reduce((a, b) => a + b.revenue, 0) / Math.max(dailyRevenue.length, 1)).toFixed(0)}
                     </p>
                   </div>
                   <div className="text-center">
@@ -328,5 +339,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }

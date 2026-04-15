@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,7 @@ import { Store, Bell, CreditCard, Palette, Save, Loader2 } from "lucide-react"
 import { useTheme } from "@/contexts/theme-context"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
+import ProtectedRoute from "@/components/protected-route"
 import api from "@/lib/api"
 import { AxiosError } from "axios"
 
@@ -35,6 +37,7 @@ interface Settings {
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { theme, toggleTheme, setTheme } = useTheme()
   const { toast } = useToast()
   const { t, isRTL } = useLanguage()
@@ -54,12 +57,32 @@ export default function SettingsPage() {
   const [loading, setLoading] = React.useState(true)
   const [saving, setSaving] = React.useState(false)
 
+  // Check if user is admin
+  React.useEffect(() => {
+    const role = localStorage.getItem('userRole')
+    if (role !== 'admin') {
+      router.replace('/dashboard')
+    }
+  }, [router])
+
   React.useEffect(() => {
     const fetchSettings = async () => {
       try {
         const res = await api.get("/settings")
-        const data = res.data.data || res.data.settings || {}
-        setSettings(data)
+        const raw = res.data.data || res.data.settings || {}
+        setSettings({
+          store_name: raw.store_name || '',
+          store_address: raw.store_address || '',
+          store_phone: raw.store_phone || '',
+          store_email: raw.store_email || '',
+          store_gstin: raw.store_gstin || '',
+          currency: raw.currency || 'PKR',
+          tax_rate: raw.tax_rate || 18,
+          items_per_page: raw.items_per_page || 25,
+          theme: raw.theme || 'light',
+          invoice_prefix: raw.invoice_prefix || 'INV',
+          low_stock_alert: raw.low_stock_alert !== undefined ? Boolean(raw.low_stock_alert) : true,
+        })
       } catch (err) {
         console.error("Failed to load settings", err)
       } finally {
@@ -133,8 +156,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <ProtectedRoute allowedRoles={["admin"]}>
+      <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">{t('settings.title')}</h1>
           <p className="text-sm text-muted-foreground">{t('settings.subtitle')}</p>
@@ -151,19 +175,23 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.storeName')}</label>
-              <Input value={settings.store_name} onChange={(e) => updateSetting("store_name", e.target.value)} />
+              <Input value={settings.store_name ?? ""} onChange={(e) => updateSetting("store_name", e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.storeAddress')}</label>
-              <Input value={settings.store_address} onChange={(e) => updateSetting("store_address", e.target.value)} />
+              <Input value={settings.store_address ?? ""} onChange={(e) => updateSetting("store_address", e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.contactNumber')}</label>
-              <Input value={settings.store_phone} onChange={(e) => updateSetting("store_phone", e.target.value)} />
+              <Input value={settings.store_phone ?? ""} onChange={(e) => updateSetting("store_phone", e.target.value)} />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.email')}</label>
-              <Input value={settings.store_email} onChange={(e) => updateSetting("store_email", e.target.value)} type="email" />
+              <Input value={settings.store_email ?? ""} onChange={(e) => updateSetting("store_email", e.target.value)} type="email" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">GSTIN</label>
+              <Input value={settings.store_gstin ?? ""} onChange={(e) => updateSetting("store_gstin", e.target.value)} placeholder="GST Identification Number" />
             </div>
           </CardContent>
         </Card>
@@ -188,7 +216,7 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">{t('settings.dailySalesSummary')}</label>
                 <p className="text-xs text-muted-foreground">{t('settings.dailySalesDesc')}</p>
               </div>
-              <Switch defaultChecked />
+              <Switch defaultChecked={true} />
             </div>
             <Separator />
             <div className="flex items-center justify-between">
@@ -196,7 +224,7 @@ export default function SettingsPage() {
                 <label className="text-sm font-medium">{t('settings.newCustomerAlerts')}</label>
                 <p className="text-xs text-muted-foreground">{t('settings.newCustomerDesc')}</p>
               </div>
-              <Switch />
+              <Switch defaultChecked={false} />
             </div>
           </CardContent>
         </Card>
@@ -210,7 +238,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.defaultCurrency')}</label>
-              <Select value={settings.currency} onValueChange={(v) => updateSetting("currency", v)}>
+              <Select value={settings.currency ?? "PKR"} onValueChange={(v) => updateSetting("currency", v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -223,7 +251,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('settings.taxRate')}</label>
-              <Select value={settings.tax_rate.toString()} onValueChange={(v) => updateSetting("tax_rate", parseInt(v))}>
+              <Select value={(settings.tax_rate ?? 18).toString()} onValueChange={(v) => updateSetting("tax_rate", parseInt(v))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -285,5 +313,6 @@ export default function SettingsPage() {
         </Button>
       </div>
     </div>
+    </ProtectedRoute>
   )
 }
