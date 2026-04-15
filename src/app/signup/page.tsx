@@ -82,9 +82,12 @@ export default function SignupPage() {
       if (response.data.success) {
         toast({
           title: "Success!",
-          description: "Account created successfully!"
+          description: "Cashier account created successfully!"
         })
-        router.push("/login")
+        // Redirect to login after successful creation
+        setTimeout(() => {
+          router.push("/login")
+        }, 1000)
       } else {
         toast({
           title: "Error",

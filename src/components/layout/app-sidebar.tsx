@@ -57,8 +57,9 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useLanguage } from "@/contexts/language-context"
+import { useAuth } from "@/contexts/auth-context"
 import { useToast } from "@/hooks/use-toast"
-
+import api from "@/lib/api"
 
 import { useRouter } from "next/navigation"
 
@@ -67,8 +68,15 @@ export function AppSidebar() {
   const pathname = usePathname()
   const { setOpenMobile } = useSidebar()
   const { language, setLanguage, t, isRTL } = useLanguage()
+  const { logout } = useAuth()
   const { toast } = useToast()
-  const [userRole] = React.useState<string>("admin")
+  const [userRole, setUserRole] = React.useState<string>("admin")
+
+  // Load user role from localStorage on mount
+  React.useEffect(() => {
+    const role = localStorage.getItem('userRole') || 'admin'
+    setUserRole(role)
+  }, [])
 
   // Create Cashier Dialog State
   const [isCashierOpen, setIsCashierOpen] = React.useState(false)
@@ -81,49 +89,89 @@ export function AppSidebar() {
     password: "",
   })
 
-  const handleCreateCashier = (e: React.FormEvent) => {
-    e.preventDefault()
-    // No backend call - just close dialog
-    setIsCashierOpen(false)
-    setCashierData({ name: "", email: "", phone: "", password: "" })
-  }
-
-  const handleSignOut = () => {
-    router.push("/login")
-  }
-
-  const items = [
+  // Filter menu items based on role
+  const allItems = [
     {
       title: t('nav.dashboard'),
       url: "/dashboard",
       icon: LayoutDashboard,
+      roles: ['admin', 'cashier'], // Both can access
     },
     {
       title: t('nav.posTerminal'),
       url: "/sales",
       icon: ShoppingCart,
+      roles: ['admin', 'cashier'], // Both can access
     },
     {
       title: t('nav.inventory'),
       url: "/inventory",
       icon: Package,
+      roles: ['admin', 'cashier'], // Both can access
     },
     {
       title: t('nav.customers'),
       url: "/customers",
       icon: Users,
+      roles: ['admin', 'cashier'], // Both can access
     },
     {
       title: t('nav.reports'),
       url: "/reports",
       icon: FileBarChart,
+      roles: ['admin'], // Admin ONLY
     },
     {
       title: t('nav.settings'),
       url: "/settings",
       icon: Settings,
+      roles: ['admin'], // Admin ONLY
     },
   ]
+
+  // Filter items based on user role
+  const items = allItems.filter(item => item.roles.includes(userRole))
+
+  const handleCreateCashier = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const response = await api.post('/auth/create-cashier', {
+        name: cashierData.name,
+        email: cashierData.email,
+        password: cashierData.password,
+      })
+
+      if (response.data.success) {
+        toast({
+          title: "Success!",
+          description: `Cashier ${cashierData.name} has been created successfully!`,
+        })
+        setIsCashierOpen(false)
+        setCashierData({ name: "", email: "", phone: "", password: "" })
+      } else {
+        toast({
+          title: "Error",
+          description: response.data.message || "Failed to create cashier",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
+      console.error('Create cashier error:', error)
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create cashier",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSignOut = () => {
+    logout()
+  }
 
   // Close sidebar on mobile when route changes
   React.useEffect(() => {
@@ -144,8 +192,6 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent className="pt-4">
-        <SidebarGroupLabel className="font-bold text-base pb-7">Management</SidebarGroupLabel>
-
         <SidebarMenu className="space-y-4">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>

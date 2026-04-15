@@ -33,6 +33,7 @@ interface ProductFormData {
   stock: string
   threshold: string
   description: string
+  unit_type: string
 }
 
 interface ProductFormDialogProps {
@@ -64,6 +65,7 @@ export function ProductFormDialog({ open, onOpenChange, editingProduct }: Produc
     stock: "",
     threshold: "",
     description: "",
+    unit_type: "pcs",
   })
 
   React.useEffect(() => {
@@ -78,6 +80,7 @@ export function ProductFormDialog({ open, onOpenChange, editingProduct }: Produc
         stock: editingProduct.stock?.toString() || "",
         threshold: editingProduct.threshold?.toString() || "",
         description: editingProduct.description || "",
+        unit_type: editingProduct.unit_type || "pcs",
       })
     } else {
       setFormData({
@@ -90,6 +93,7 @@ export function ProductFormDialog({ open, onOpenChange, editingProduct }: Produc
         stock: "",
         threshold: "",
         description: "",
+        unit_type: "pcs",
       })
     }
   }, [editingProduct, open])
@@ -226,7 +230,10 @@ export function ProductFormDialog({ open, onOpenChange, editingProduct }: Produc
               </div>
               <div className="space-y-2">
                 <Label htmlFor="unit">Unit Type</Label>
-                <Select defaultValue="pcs">
+                <Select 
+                  value={formData.unit_type} 
+                  onValueChange={(value) => handleChange("unit_type", value)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
