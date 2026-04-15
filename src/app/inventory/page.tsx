@@ -24,6 +24,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/contexts/language-context"
+import ProtectedRoute from "@/components/protected-route"
 import api from "@/lib/api"
 import { AxiosError } from "axios"
 
@@ -68,8 +69,28 @@ export default function InventoryPage() {
     unitType: "pcs",
     image: "",
   })
+  
+  // Separate string states for numeric inputs to allow empty typing
+  const [numInputs, setNumInputs] = React.useState({
+    price: "0",
+    costPrice: "0",
+    stock: "0",
+    minStock: "10"
+  })
+
   const [productImage, setProductImage] = React.useState<string>("")
   const [saving, setSaving] = React.useState(false)
+
+  // Sync newProduct when numInputs change
+  React.useEffect(() => {
+    setNewProduct(prev => ({
+      ...prev,
+      price: parseFloat(numInputs.price) || 0,
+      costPrice: parseFloat(numInputs.costPrice) || 0,
+      stock: parseInt(numInputs.stock) || 0,
+      minStock: parseInt(numInputs.minStock) || 10
+    }))
+  }, [numInputs])
 
   // Load from backend API on mount
   React.useEffect(() => {
@@ -79,19 +100,19 @@ export default function InventoryPage() {
         const res = await api.get("/products")
         const data = res.data.data || []
         const mapped = data.map((p: any) => ({
-          id: p.id.toString(),
+          id: p.id?.toString() || "",
           name: p.name || "",
           category: p.category || "",
-          price: parseFloat(p.selling_price) || 0,
-          costPrice: parseFloat(p.cost_price) || 0,
-          stock: parseInt(p.stock) || 0,
-          minStock: parseInt(p.threshold) || 10,
+          price: p.selling_price != null ? parseFloat(p.selling_price) : 0,
+          costPrice: p.cost_price != null ? parseFloat(p.cost_price) : 0,
+          stock: p.stock != null ? parseInt(p.stock) : 0,
+          minStock: p.threshold != null ? parseInt(p.threshold) : 10,
           sku: p.sku || "",
           barcode: p.barcode || "",
           description: p.description || "",
           unitType: p.unit_type || "pcs",
           image: p.image || "",
-          status: getStatus(parseInt(p.stock) || 0, parseInt(p.threshold) || 10),
+          status: getStatus(p.stock != null ? parseInt(p.stock) : 0, p.threshold != null ? parseInt(p.threshold) : 10),
         }))
         setProducts(mapped)
         const cats = [...new Set(mapped.map((p: Product) => p.category).filter(Boolean))] as string[]
@@ -146,25 +167,26 @@ export default function InventoryPage() {
         description: newProduct.description || "",
         selling_price: newProduct.price || 0,
         cost_price: newProduct.costPrice || 0,
-        stock: newProduct.stock || 0,
-        threshold: newProduct.minStock || 10,
+        stock: newProduct.stock ?? 0,
+        threshold: newProduct.minStock ?? 10,
         unit_type: newProduct.unitType || "pcs",
+        image: newProduct.image || "",
       })
       const backendProduct = res.data.data
       const product: Product = {
         id: backendProduct.id.toString(),
-        name: backendProduct.name,
-        category: backendProduct.category,
-        price: parseFloat(backendProduct.selling_price),
-        costPrice: parseFloat(backendProduct.cost_price),
-        stock: parseInt(backendProduct.stock),
-        minStock: parseInt(backendProduct.threshold),
-        sku: backendProduct.sku,
-        barcode: backendProduct.barcode,
-        description: backendProduct.description,
-        unitType: backendProduct.unit_type,
-        image: newProduct.image || "",
-        status: getStatus(parseInt(backendProduct.stock), parseInt(backendProduct.threshold)),
+        name: backendProduct.name || "",
+        category: backendProduct.category || "",
+        price: backendProduct.selling_price != null ? parseFloat(backendProduct.selling_price) : 0,
+        costPrice: backendProduct.cost_price != null ? parseFloat(backendProduct.cost_price) : 0,
+        stock: backendProduct.stock != null ? parseInt(backendProduct.stock) : 0,
+        minStock: backendProduct.threshold != null ? parseInt(backendProduct.threshold) : 10,
+        sku: backendProduct.sku || "",
+        barcode: backendProduct.barcode || "",
+        description: backendProduct.description || "",
+        unitType: backendProduct.unit_type || "pcs",
+        image: backendProduct.image || "",
+        status: getStatus(backendProduct.stock != null ? parseInt(backendProduct.stock) : 0, backendProduct.threshold != null ? parseInt(backendProduct.threshold) : 10),
       }
       const updated = [...products, product]
       setProducts(updated)
@@ -177,7 +199,13 @@ export default function InventoryPage() {
       toast({ title: "Product added", description: `${product.name} has been added to inventory.` })
     } catch (err) {
       const error = err as AxiosError<{ message?: string }>
-      toast({ title: "Error", description: error.response?.data?.message || "Failed to add product", variant: "destructive" })
+      const errorMessage = error.response?.data?.message || error.message || "Failed to add product"
+      console.error('Add product error:', error)
+      toast({ 
+        title: "Error Adding Product", 
+        description: errorMessage, 
+        variant: "destructive" 
+      })
     } finally {
       setSaving(false)
     }
@@ -220,23 +248,25 @@ export default function InventoryPage() {
         stock: editingProduct.stock,
         threshold: editingProduct.minStock,
         unit_type: editingProduct.unitType,
+        image: editingProduct.image || "",
       })
       const backendProduct = res.data.data
       const updated = products.map(p =>
         p.id === backendProduct.id.toString()
           ? {
               ...p,
-              name: backendProduct.name,
-              category: backendProduct.category,
-              price: parseFloat(backendProduct.selling_price),
-              costPrice: parseFloat(backendProduct.cost_price),
-              stock: parseInt(backendProduct.stock),
-              minStock: parseInt(backendProduct.threshold),
-              sku: backendProduct.sku,
-              barcode: backendProduct.barcode,
-              description: backendProduct.description,
-              unitType: backendProduct.unit_type,
-              status: getStatus(parseInt(backendProduct.stock), parseInt(backendProduct.threshold)),
+              name: backendProduct.name || "",
+              category: backendProduct.category || "",
+              price: backendProduct.selling_price != null ? parseFloat(backendProduct.selling_price) : 0,
+              costPrice: backendProduct.cost_price != null ? parseFloat(backendProduct.cost_price) : 0,
+              stock: backendProduct.stock != null ? parseInt(backendProduct.stock) : 0,
+              minStock: backendProduct.threshold != null ? parseInt(backendProduct.threshold) : 10,
+              sku: backendProduct.sku || "",
+              barcode: backendProduct.barcode || "",
+              description: backendProduct.description || "",
+              unitType: backendProduct.unit_type || "pcs",
+              image: backendProduct.image || "",
+              status: getStatus(backendProduct.stock != null ? parseInt(backendProduct.stock) : 0, backendProduct.threshold != null ? parseInt(backendProduct.threshold) : 10),
             }
           : p
       )
@@ -272,18 +302,7 @@ export default function InventoryPage() {
     setSaving(true)
     try {
       const newStock = restockingProduct.stock + restockQuantity
-      await api.put(`/products/${restockingProduct.id}`, {
-        name: restockingProduct.name,
-        category: restockingProduct.category,
-        sku: restockingProduct.sku,
-        barcode: restockingProduct.barcode,
-        description: restockingProduct.description,
-        selling_price: restockingProduct.price,
-        cost_price: restockingProduct.costPrice,
-        stock: newStock,
-        threshold: restockingProduct.minStock,
-        unit_type: restockingProduct.unitType,
-      })
+      await api.put(`/products/${restockingProduct.id}`, { stock: newStock })
       const updated = products.map(p => {
         if (p.id === restockingProduct.id) {
           return { ...p, stock: newStock, status: getStatus(newStock, p.minStock) }
@@ -335,9 +354,10 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <ProtectedRoute>
+      <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary">{t('inventory.title')}</h1>
           <p className="text-sm text-muted-foreground">{t('inventory.subtitle')}</p>
@@ -521,33 +541,65 @@ export default function InventoryPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="price">Price</Label>
-                <Input id="price" type="number" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) || 0 })} />
+                <Label htmlFor="price">Selling Price</Label>
+                <Input id="price" type="number" step="0.01" value={numInputs.price} onChange={(e) => setNumInputs({ ...numInputs, price: e.target.value })} placeholder="0.00" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="costPrice">Cost Price</Label>
+                <Input id="costPrice" type="number" step="0.01" value={numInputs.costPrice} onChange={(e) => setNumInputs({ ...numInputs, costPrice: e.target.value })} placeholder="0.00" />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="stock">Stock</Label>
-                <Input id="stock" type="number" value={newProduct.stock} onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) || 0 })} />
+                <Input id="stock" type="number" value={numInputs.stock} onChange={(e) => setNumInputs({ ...numInputs, stock: e.target.value })} placeholder="0" />
               </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="minStock">{t('inventory.minStock')}</Label>
-                <Input id="minStock" type="number" value={newProduct.minStock} onChange={(e) => setNewProduct({ ...newProduct, minStock: parseInt(e.target.value) || 10 })} />
+                <Input id="minStock" type="number" value={numInputs.minStock} onChange={(e) => setNumInputs({ ...numInputs, minStock: e.target.value })} placeholder="10" />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="unitType">Unit Type</Label>
+                <Select 
+                  value={newProduct.unitType || 'pcs'} 
+                  onValueChange={(value) => setNewProduct({ ...newProduct, unitType: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pcs">Pieces (pcs)</SelectItem>
+                    <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                    <SelectItem value="g">Grams (g)</SelectItem>
+                    <SelectItem value="l">Liters (l)</SelectItem>
+                    <SelectItem value="ml">Milliliters (ml)</SelectItem>
+                    <SelectItem value="m">Meters (m)</SelectItem>
+                    <SelectItem value="box">Boxes</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             {/* Image Upload */}
             <div className="grid gap-2">
-              <Label>Product Image</Label>
+              <div className="flex items-center justify-between">
+                <Label>Product Image</Label>
+                <span className="text-[10px] text-muted-foreground font-medium bg-muted px-2 py-0.5 rounded-full border border-border">MAX 5MB</span>
+              </div>
               {productImage ? (
                 <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-border">
                   <img src={productImage} alt="Product" className="w-full h-full object-cover" />
                   <button type="button" onClick={removeImage} className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"><X className="w-4 h-4" /></button>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer">
+                <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer group">
                   <label htmlFor="product-image" className="cursor-pointer">
                     <div className="flex flex-col items-center gap-2">
-                      <Upload className="w-8 h-8 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">Click to upload image</p>
+                      <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <div className="text-center">
+                        <p className="text-sm text-muted-foreground font-medium">Click to upload image</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-1">Supports: JPG, PNG, WEBP (Max 5MB)</p>
+                      </div>
                     </div>
                     <Input id="product-image" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                   </label>
@@ -575,31 +627,53 @@ export default function InventoryPage() {
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label>Product Name</Label>
-                <Input value={editingProduct.name} onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })} />
+                <Input value={editingProduct.name ?? ""} onChange={(e) => setEditingProduct({ ...editingProduct, name: e.target.value })} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>SKU</Label>
-                  <Input value={editingProduct.sku} onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })} />
+                  <Input value={editingProduct.sku ?? ""} onChange={(e) => setEditingProduct({ ...editingProduct, sku: e.target.value })} />
                 </div>
                 <div className="grid gap-2">
                   <Label>Category</Label>
-                  <Input value={editingProduct.category} onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })} />
+                  <Input value={editingProduct.category ?? ""} onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })} />
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label>Price</Label>
-                  <Input type="number" value={editingProduct.price} onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })} />
+                  <Input type="number" value={editingProduct.price ?? 0} onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })} />
                 </div>
                 <div className="grid gap-2">
                   <Label>Stock</Label>
-                  <Input type="number" value={editingProduct.stock} onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })} />
+                  <Input type="number" value={editingProduct.stock ?? 0} onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })} />
                 </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Min Stock</Label>
-                  <Input type="number" value={editingProduct.minStock} onChange={(e) => setEditingProduct({ ...editingProduct, minStock: parseInt(e.target.value) || 10 })} />
+                  <Input type="number" value={editingProduct.minStock ?? 10} onChange={(e) => setEditingProduct({ ...editingProduct, minStock: parseInt(e.target.value) || 10 })} />
                 </div>
+                <div className="grid gap-2">
+                  <Label>Unit Type</Label>
+                  <Select 
+                    value={editingProduct.unitType || 'pcs'} 
+                    onValueChange={(value) => setEditingProduct({ ...editingProduct, unitType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pcs">Pieces (pcs)</SelectItem>
+                      <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                      <SelectItem value="g">Grams (g)</SelectItem>
+                      <SelectItem value="l">Liters (l)</SelectItem>
+                      <SelectItem value="ml">Milliliters (ml)</SelectItem>
+                      <SelectItem value="m">Meters (m)</SelectItem>
+                      <SelectItem value="box">Boxes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               </div>
             </div>
           )}
@@ -656,5 +730,6 @@ export default function InventoryPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedRoute>
   )
 }

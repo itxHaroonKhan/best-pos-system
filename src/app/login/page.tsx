@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useAuth } from "@/contexts/auth-context"
 import api from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
   const { toast } = useToast()
   const [showPassword, setShowPassword] = React.useState(false)
   const [email, setEmail] = React.useState("")
@@ -29,11 +31,12 @@ export default function LoginPage() {
       })
 
       if (response.data.success) {
-        // Store auth data
-        localStorage.setItem('authToken', response.data.token)
-        localStorage.setItem('userRole', response.data.user.role)
-        localStorage.setItem('userId', response.data.user.id.toString())
-        localStorage.setItem('userName', response.data.user.name)
+        // Use auth context to login
+        login(response.data.token, {
+          id: response.data.user.id.toString(),
+          name: response.data.user.name,
+          role: response.data.user.role,
+        })
 
         toast({
           title: "Success!",

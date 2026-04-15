@@ -22,7 +22,18 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    // Log more details for 400 errors to help debugging
+    if (error.response?.status === 400) {
+      console.error('❌ API 400 Bad Request:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.config?.data ? JSON.parse(error.config.data) : null,
+        error: error.response?.data
+      })
+    }
+
+    // Only redirect on 401 (unauthorized/token expired), NOT on 403 (forbidden)
+    if (error.response?.status === 401) {
       // Don't redirect on login page itself
       if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
         localStorage.removeItem('authToken')

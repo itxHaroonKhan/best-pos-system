@@ -44,7 +44,7 @@ export function AIInsights() {
   ]
 
   return (
-    <Card className="border-border bg-card/50 backdrop-blur-xl">
+    <Card className="border-white bg-card/50 backdrop-blur-xl">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
@@ -58,12 +58,12 @@ export function AIInsights() {
         <div className="space-y-4">
           {/* AI Generated Insight */}
           {loading ? (
-            <div className="flex items-center gap-3 p-4 rounded-lg border border-border bg-muted/30">
+            <div className="flex items-center gap-3 p-4 rounded-lg border border-white bg-muted/30">
               <Loader2 className="w-5 h-5 text-primary animate-spin" />
               <p className="text-sm text-muted-foreground">Generating AI insights...</p>
             </div>
           ) : (
-            <div className="flex items-start gap-3 p-4 rounded-lg border border-primary/20 bg-primary/5">
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-white bg-primary/5">
               <Sparkles className="w-5 h-5 text-primary mt-0.5" />
               <div className="flex-1">
                 <p className="font-medium text-base text-foreground mb-1.5">AI Sales Summary</p>
@@ -77,7 +77,7 @@ export function AIInsights() {
           {staticInsights.map((item, index) => (
             <div
               key={index}
-              className="flex items-start gap-3 p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors"
+              className="flex items-start gap-3 p-3 rounded-lg border border-white hover:bg-muted/50 transition-colors"
             >
               {item.type === "positive" ? (
                 <TrendingUp className="w-5 h-5 text-green-500 mt-0.5" />

@@ -99,15 +99,7 @@ export function PaymentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md z-[10000]">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Complete Payment</span>
-            <button
-              onClick={() => onOpenChange(false)}
-              className="rounded-full p-1 hover:bg-muted transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </DialogTitle>
+          <DialogTitle>Complete Payment</DialogTitle>
           <DialogDescription>
             {cart.length} items in cart
           </DialogDescription>
