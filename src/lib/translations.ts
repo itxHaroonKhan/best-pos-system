@@ -155,6 +155,7 @@ export type TranslationKeys = {
   'reports.totalOrders': string
   'reports.totalCustomers': string
   'reports.avgOrderValue': string
+  'reports.profitMargin': string
   'reports.fromLastPeriod': string
   'reports.salesOverview': string
   'reports.salesByCategory': string
@@ -249,7 +250,7 @@ export const translations: Record<'en' | 'ur', TranslationKeys> = {
     'dashboard.lowStock': 'Low Stock Items',
     'dashboard.fromLastMonth': 'from last month',
     'dashboard.realtimeSales': 'Real-time Sales Feed',
-    'dashboard.topCategories': 'Top Categories',
+    'dashboard.topCategories': 'Top Selling Categories',
     'dashboard.dailyRevenue': 'Daily Revenue Trends',
     'dashboard.thisWeek': 'This Week',
     'dashboard.avgDailyRevenue': 'Avg Daily Revenue',
@@ -376,6 +377,7 @@ export const translations: Record<'en' | 'ur', TranslationKeys> = {
     'reports.totalOrders': 'Total Orders',
     'reports.totalCustomers': 'Total Customers',
     'reports.avgOrderValue': 'Avg Order Value',
+    'reports.profitMargin': 'Profit Margin',
     'reports.fromLastPeriod': 'from last period',
     'reports.salesOverview': 'Sales Overview',
     'reports.salesByCategory': 'Sales by Category',
@@ -596,6 +598,7 @@ export const translations: Record<'en' | 'ur', TranslationKeys> = {
     'reports.totalOrders': 'کل آرڈرز',
     'reports.totalCustomers': 'کل کسٹمرز',
     'reports.avgOrderValue': 'اوسط آرڈر ویلیو',
+    'reports.profitMargin': 'منافع کا مارجن',
     'reports.fromLastPeriod': 'پچھلی مدت سے',
     'reports.salesOverview': 'فروخت کا جائزہ',
     'reports.salesByCategory': 'زمرہ وار فروخت',

@@ -124,7 +124,7 @@ export function DonutChart({
         {/* Tooltip - Positioned Below Active Segment */}
         {activeItem && activePercentage && activeIndex !== null && (
           <div
-            className="absolute rounded-md px-2 py-1.5 shadow-lg z-10 min-w-[90px] pointer-events-none transition-all duration-150 ease-out border border-white/20"
+            className="absolute rounded px-2 py-1 shadow-lg z-10 w-max pointer-events-none transition-all duration-150 ease-out border border-white/20"
             style={{
               left: tooltipPos.x,
               top: tooltipPos.y,
@@ -132,21 +132,21 @@ export function DonutChart({
               backgroundColor: COLORS[activeIndex % COLORS.length],
             }}
           >
-            <p className="text-[10px] font-semibold mb-0.5 text-white">{activeItem.name}</p>
-            <p className="text-[9px] text-white/80">
+            <p className="text-[9px] font-semibold leading-tight text-white whitespace-nowrap">{activeItem.name}</p>
+            <p className="text-[8px] text-white/90 leading-tight">
               {valueFormatter ? valueFormatter(activeItem.amount) : activeItem.amount.toLocaleString()}
             </p>
-            <p className="text-[9px] font-medium text-white mt-0.5">{activePercentage}%</p>
+            <p className="text-[8px] font-bold text-white mt-0.5 leading-tight">{activePercentage}%</p>
           </div>
         )}
 
         {/* Center Label */}
         {showLabel && (
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <p className="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <p className="text-[10px] sm:text-xs text-white mb-0.5 font-medium uppercase tracking-wider">Total</p>
+            <p className="text-lg sm:text-xl font-extrabold text-white">
               {valueFormatter ? valueFormatter(total) : total.toLocaleString()}
             </p>
-            <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 font-medium">Total</p>
           </div>
         )}
       </div>
